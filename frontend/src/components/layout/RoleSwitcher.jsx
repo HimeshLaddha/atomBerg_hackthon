@@ -7,7 +7,13 @@ const ROLE_META = {
     icon: '👤',
     color: 'from-violet-500 to-indigo-600',
     bg: 'bg-violet-50 text-violet-700 border-violet-200',
-    desc: 'Goal Setting & Tracking'
+    desc: 'Goal Setting & Tracking (Charlie)'
+  },
+  'Employee (Diana)': {
+    icon: '👤',
+    color: 'from-violet-500 to-indigo-600',
+    bg: 'bg-violet-50 text-violet-700 border-violet-200',
+    desc: 'Goal Setting & Tracking (Diana)'
   },
   'Manager (L1)': {
     icon: '🏆',
@@ -35,7 +41,7 @@ const RoleSwitcher = () => {
   const handleRoleSwitch = (role) => {
     switchRole(role);
     setOpen(false);
-    if (role === 'Employee') navigate('/employee/goals');
+    if (role === 'Employee' || role === 'Employee (Diana)') navigate('/employee/goals');
     else if (role === 'Manager (L1)') navigate('/manager/dashboard');
     else if (role === 'Admin/HR') navigate('/admin/overview');
   };

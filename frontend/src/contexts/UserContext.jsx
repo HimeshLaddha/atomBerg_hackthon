@@ -5,7 +5,8 @@ export const UserContext = createContext();
 export const UserProvider = ({ children }) => {
   // Hardcoded mock users based on seed data
   const MOCK_USERS = {
-    Employee: { userId: 'EMP-003', name: 'Charlie Employee', role: 'Employee', department: 'Engineering' },
+    'Employee': { userId: 'EMP-003', name: 'Charlie Employee', role: 'Employee', department: 'Engineering' },
+    'Employee (Diana)': { userId: 'EMP-004', name: 'Diana Employee', role: 'Employee', department: 'Engineering' },
     'Manager (L1)': { userId: 'EMP-002', name: 'Bob Manager', role: 'Manager', department: 'Engineering' },
     'Admin/HR': { userId: 'EMP-001', name: 'Alice Admin', role: 'Admin', department: 'Human Resources' }
   };

@@ -438,7 +438,7 @@ router.post('/shared-kpi', async (req, res) => {
       thrustArea,
       uomType,
       target,
-      weightage: 10,
+      weightage: 0, // Employee must allocate weightage manually when rebalancing their sheet
       isShared: true
     };
 

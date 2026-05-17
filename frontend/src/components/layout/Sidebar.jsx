@@ -111,7 +111,7 @@ const Sidebar = () => {
       {/* Flow Reference Key */}
       <div className="m-4 p-3 bg-gray-50 border border-gray-100 rounded-xl">
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Current Flow</p>
-        {activeRoleName === 'Employee' && (
+        {(activeRoleName === 'Employee' || activeRoleName === 'Employee (Diana)') && (
           <div className="space-y-1.5 text-xs text-gray-500">
             <div className="flex items-center space-x-2">
               <span className="w-1.5 h-1.5 rounded-full bg-violet-400"></span>

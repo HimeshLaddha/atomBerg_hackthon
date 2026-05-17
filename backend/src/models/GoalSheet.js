@@ -33,8 +33,8 @@ const goalSchema = new mongoose.Schema({
   },
   weightage: {
     type: Number,
-    required: true,
-    min: 10
+    required: true
+    // min: 10 enforced only at /submit time via validateGoalArray(), not on draft saves
   },
   isShared: {
     type: Boolean,
@@ -78,16 +78,12 @@ const goalSheetSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Pre-save hook to ensure weightage strictly sums to 100%
-goalSheetSchema.pre('save', function() {
-  if (this.goals && this.goals.length > 0) {
-    const totalWeightage = this.goals.reduce((acc, goal) => acc + (Number(goal.weightage) || 0), 0);
-    // Allow slight float discrepancies or exact match
-    if (Math.abs(totalWeightage - 100) > 0.01) {
-      throw new Error('Total combined weightage across all goals must equal exactly 100%. Current total: ' + totalWeightage);
-    }
-  }
-});
+// Note: 100% weightage validation is intentionally NOT in the pre-save hook.
+// It is enforced only at /submit time via validateGoalArray().
+// This allows:
+//   1. Draft saves with any total (employees iterate freely)
+//   2. Shared KPI injection (starts at 0%, employee rebalances before submitting)
+
 
 const GoalSheet = mongoose.model('GoalSheet', goalSheetSchema);
 export default GoalSheet;
