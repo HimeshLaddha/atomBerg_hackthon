@@ -1,36 +1,36 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import { UserContext } from '../contexts/UserContext';
 import axios from 'axios';
 import { calculateProgress } from '../utils/progressEngine';
 import EmployeeGoalForm from './EmployeeGoalForm';
 
-const EmployeeTracking = () => {
+const QUARTER_LABELS = [
+  { key: 'Q1', label: 'Q1 Progress' },
+  { key: 'Q2', label: 'Q2 Progress' },
+  { key: 'Q3', label: 'Q3 Progress' },
+  { key: 'Q4', label: 'Q4 Progress' },
+];
+
+const EmployeeTracking = ({ existingSheet, refreshSheet }) => {
   const { activeUser } = useContext(UserContext);
-  const [sheet, setSheet] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [activeQuarter, setActiveQuarter] = useState('Q1');
+  const [localAchievements, setLocalAchievements] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
 
-  const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+  const sheet = existingSheet;
 
-  const fetchSheet = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get(`http://localhost:5000/api/goals/${activeUser.userId}/2026-H1`);
-      setSheet(res.data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+  const handleLocalChange = (goalId, field, value) => {
+    setLocalAchievements(prev => ({
+      ...prev,
+      [`${goalId}-${activeQuarter}`]: {
+        ...(prev[`${goalId}-${activeQuarter}`] || {}),
+        [field]: value
+      }
+    }));
   };
 
-  useEffect(() => {
-    fetchSheet();
-  }, [activeUser.userId]);
-
-  const handleUpdateAchievement = async (goalId, actualAchievement, status) => {
+  const handleSaveAchievement = async (goalId, actualAchievement, status) => {
     setIsSaving(true);
     setMessage('');
     try {
@@ -41,38 +41,46 @@ const EmployeeTracking = () => {
         status,
         changedBy: activeUser.userId
       });
-      setMessage('Progress updated successfully.');
-      // Update local state without refetching completely for smooth UI
-      setSheet((prev) => {
-        const newSheet = { ...prev };
-        const goalIndex = newSheet.goals.findIndex(g => g._id === goalId);
-        if (goalIndex > -1) {
-          newSheet.goals[goalIndex].quarterlyAchievements[activeQuarter].actualAchievement = actualAchievement;
-          newSheet.goals[goalIndex].quarterlyAchievements[activeQuarter].status = status;
-        }
-        return newSheet;
-      });
+      setMessage('Progress saved successfully.');
+      if (refreshSheet) refreshSheet();
     } catch (error) {
-      setMessage('Error updating progress: ' + (error.response?.data?.message || error.message));
+      setMessage('Error saving progress: ' + (error.response?.data?.message || error.message));
     } finally {
       setIsSaving(false);
       setTimeout(() => setMessage(''), 3000);
     }
   };
 
-  if (loading) return <div className="text-center mt-20 text-gray-500">Loading your goal sheet...</div>;
+  // If no sheet at all — guard (EmployeeDashboard handles this case, but defensive check)
+  if (!sheet) return null;
 
-  // If no sheet or sheet is not locked, show the Goal Form (Draft mode)
-  if (!sheet || !sheet.isLocked) {
-    if (sheet && sheet.status === 'Pending_Approval') {
-      return (
-        <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-200 text-center">
-          <h2 className="text-xl font-semibold text-yellow-800">Sheet Pending Approval</h2>
-          <p className="text-yellow-700 mt-2">Your manager is currently reviewing your goals. You can track progress once it is approved and locked.</p>
+  // Draft state: show the editable form for the existing draft
+  if (sheet.status === 'Draft') {
+    return (
+      <div>
+        <div className="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center space-x-3">
+          <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Draft in Progress</p>
+            <p className="text-xs text-amber-600">Your goals have been saved. Review, make changes, then submit for manager approval.</p>
+          </div>
         </div>
-      );
-    }
-    return <EmployeeGoalForm existingSheet={sheet} onSuccess={fetchSheet} />;
+        <EmployeeGoalForm existingSheet={sheet} onSuccess={refreshSheet} />
+      </div>
+    );
+  }
+
+  // Pending approval state: locked out, show status banner
+  if (sheet.status === 'Pending_Approval') {
+    return (
+      <div className="bg-yellow-50 p-8 rounded-xl border border-yellow-200 text-center">
+        <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <h2 className="text-xl font-semibold text-yellow-800 mb-2">Sheet Pending Approval</h2>
+        <p className="text-yellow-700">Your manager is currently reviewing your goals. Quarterly tracking will be unlocked once approved.</p>
+      </div>
+    );
   }
 
   return (
@@ -94,19 +102,19 @@ const EmployeeTracking = () => {
         </div>
       )}
 
-      {/* Quarter Tab Selection */}
-      <div className="flex space-x-2 mb-8 bg-gray-50 p-2 rounded-lg border border-gray-200 w-fit">
-        {quarters.map((q) => (
+      {/* Quarter Tab Navbar */}
+      <div className="flex space-x-1 mb-8 bg-gray-100 p-1.5 rounded-xl border border-gray-200">
+        {QUARTER_LABELS.map(({ key, label }) => (
           <button
-            key={q}
-            onClick={() => setActiveQuarter(q)}
-            className={`px-6 py-2 rounded-md font-semibold transition-all duration-200 text-sm ${
-              activeQuarter === q 
-                ? 'bg-white text-indigo-700 shadow-sm border border-gray-200' 
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+            key={key}
+            onClick={() => setActiveQuarter(key)}
+            className={`flex-1 px-4 py-2.5 rounded-lg font-semibold transition-all duration-200 text-sm ${
+              activeQuarter === key
+                ? 'bg-white text-indigo-700 shadow-sm border border-gray-200'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
             }`}
           >
-            {q}
+            {label}
           </button>
         ))}
       </div>
@@ -117,8 +125,9 @@ const EmployeeTracking = () => {
           const actual = currentQuarterData.actualAchievement || '';
           const status = currentQuarterData.status || 'Not Started';
           
-          // Use Progress Engine!
-          const progressScore = calculateProgress(goal.uomType, goal.target, actual);
+          // Live local value takes priority so meter reacts instantly as user types
+          const liveActual = localAchievements[`${goal._id}-${activeQuarter}`]?.actualAchievement ?? actual;
+          const progressScore = calculateProgress(goal.uomType, goal.target, liveActual);
 
           return (
             <div key={goal._id} className="p-6 border border-gray-200 rounded-xl bg-gray-50 hover:border-indigo-200 transition-colors">
@@ -153,32 +162,46 @@ const EmployeeTracking = () => {
                 </div>
 
                 {/* Interactive Tracking Input */}
-                <div className="lg:w-1/3 bg-white p-5 rounded-lg border border-indigo-100 shadow-sm flex flex-col justify-center">
-                  <h4 className="text-sm font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100">Log {activeQuarter} Results</h4>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">Actual Achievement</label>
-                      <input 
-                        type="text" 
-                        value={actual}
-                        placeholder={`Enter your ${activeQuarter} actuals...`}
-                        onChange={(e) => handleUpdateAchievement(goal._id, e.target.value, status)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white"
-                      />
-                    </div>
+                <div className="lg:w-1/3 bg-white p-5 rounded-lg border border-indigo-100 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100">Log {QUARTER_LABELS.find(q => q.key === activeQuarter)?.label} Results</h4>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">Actual Achievement</label>
+                        <input 
+                          type="text" 
+                          value={localAchievements[`${goal._id}-${activeQuarter}`]?.actualAchievement ?? actual}
+                          placeholder={`Enter your ${activeQuarter} actuals...`}
+                          onChange={(e) => handleLocalChange(goal._id, 'actualAchievement', e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white"
+                        />
+                      </div>
 
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">Status Selection</label>
-                      <select 
-                        value={status}
-                        onChange={(e) => handleUpdateAchievement(goal._id, actual, e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 focus:bg-white cursor-pointer"
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">Status Selection</label>
+                        <select 
+                          value={localAchievements[`${goal._id}-${activeQuarter}`]?.status ?? status}
+                          onChange={(e) => handleLocalChange(goal._id, 'status', e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 focus:bg-white cursor-pointer"
+                        >
+                          <option value="Not Started">Not Started</option>
+                          <option value="On Track">On Track</option>
+                          <option value="Completed">Completed</option>
+                        </select>
+                      </div>
+
+                      <button
+                        onClick={() => handleSaveAchievement(
+                          goal._id,
+                          localAchievements[`${goal._id}-${activeQuarter}`]?.actualAchievement ?? actual,
+                          localAchievements[`${goal._id}-${activeQuarter}`]?.status ?? status
+                        )}
+                        disabled={isSaving}
+                        className="w-full mt-2 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                       >
-                        <option value="Not Started">Not Started</option>
-                        <option value="On Track">On Track</option>
-                        <option value="Completed">Completed</option>
-                      </select>
+                        {isSaving ? 'Saving...' : 'Save Progress'}
+                      </button>
                     </div>
                   </div>
 

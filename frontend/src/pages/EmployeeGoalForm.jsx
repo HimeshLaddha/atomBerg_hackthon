@@ -43,6 +43,26 @@ const EmployeeGoalForm = ({ existingSheet, onSuccess }) => {
     setGoals(goals.map(g => (g.id === id ? { ...g, [field]: value } : g)));
   };
 
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setMessage('');
+    try {
+      await axios.post('http://localhost:5000/api/goals/save', {
+        employeeId: activeUser.userId,
+        cycle: '2026-H1',
+        goals: goals.map(({ id, _id, ...rest }) => ({ ...rest, goalId: id.toString() }))
+      });
+      setMessage('Draft saved successfully!');
+      if (onSuccess) onSuccess();
+    } catch (error) {
+      console.error(error);
+      setMessage(error.response?.data?.message || 'Failed to save draft');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isFormValid) return;
@@ -192,13 +212,23 @@ const EmployeeGoalForm = ({ existingSheet, onSuccess }) => {
             + Add Another Goal {goals.length >= 8 && '(Max 8 Reached)'}
           </button>
 
-          <button 
-            type="submit" 
-            disabled={!isFormValid || isSubmitting}
-            className={`px-6 py-2 text-sm font-semibold rounded-md shadow-sm text-white ${!isFormValid || isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
-          >
-            {isSubmitting ? 'Submitting...' : 'Submit for Approval'}
-          </button>
+          <div className="flex space-x-3">
+            <button 
+              type="button" 
+              onClick={handleSave}
+              disabled={isSubmitting}
+              className="px-6 py-2 text-sm font-semibold rounded-md shadow-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              Save Draft
+            </button>
+            <button 
+              type="submit" 
+              disabled={!isFormValid || isSubmitting}
+              className={`px-6 py-2 text-sm font-semibold rounded-md shadow-sm text-white ${!isFormValid || isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit for Approval'}
+            </button>
+          </div>
         </div>
         
         {message && (

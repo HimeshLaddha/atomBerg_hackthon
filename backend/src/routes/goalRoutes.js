@@ -5,6 +5,59 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
+// GET / (Root route for Employee Dashboard conditional checking)
+router.get('/', async (req, res) => {
+  const { userId } = req.query;
+  if (!userId) return res.status(400).json({ message: 'userId query parameter is required' });
+
+  try {
+    const user = await User.findOne({ userId });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Assuming current cycle is '2026-H1' for the hackathon
+    const sheet = await GoalSheet.findOne({ employeeId: user._id, cycle: '2026-H1' });
+    if (sheet) {
+      res.json(sheet);
+    } else {
+      res.status(200).json({ exists: false });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// GET /team/subordinates (Manager's team overview)
+router.get('/team/subordinates', async (req, res) => {
+  const { managerId } = req.query;
+  if (!managerId) return res.status(400).json({ message: 'managerId query parameter is required' });
+
+  try {
+    const manager = await User.findOne({ userId: managerId });
+    if (!manager) return res.status(404).json({ message: 'Manager not found' });
+
+    // Find all subordinates
+    const subordinates = await User.find({ managerId: manager._id });
+    
+    // Attach GoalSheet status for each subordinate
+    const teamData = await Promise.all(subordinates.map(async (sub) => {
+      const sheet = await GoalSheet.findOne({ employeeId: sub._id, cycle: '2026-H1' });
+      return {
+        _id: sub._id,
+        userId: sub.userId,
+        name: sub.name,
+        email: sub.email,
+        department: sub.department,
+        goalSheetStatus: sheet ? sheet.status : 'Not Started',
+        goalSheetId: sheet ? sheet._id : null
+      };
+    }));
+
+    res.json(teamData);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // GET all pending goal sheets for a manager's direct reports
 router.get('/pending', async (req, res) => {
   // In a real app, managerId would come from auth context
@@ -80,8 +133,8 @@ router.get('/:employeeId/:cycle', async (req, res) => {
   }
 });
 
-// POST /submit (Employee submits or updates their draft)
-router.post('/submit', async (req, res) => {
+// POST /save (Employee saves their draft)
+router.post('/save', async (req, res) => {
   const { employeeId, cycle, goals } = req.body;
   
   try {
@@ -93,6 +146,35 @@ router.post('/submit', async (req, res) => {
     if (sheet) {
       if (sheet.isLocked) return res.status(403).json({ message: 'Goal sheet is locked' });
       sheet.goals = goals;
+      sheet.status = 'Draft';
+      await sheet.save();
+    } else {
+      sheet = await GoalSheet.create({
+        employeeId: user._id,
+        cycle,
+        status: 'Draft',
+        goals
+      });
+    }
+    res.status(200).json(sheet);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// POST /submit (Employee submits draft for approval)
+router.post('/submit', async (req, res) => {
+  const { employeeId, cycle, goals } = req.body;
+  
+  try {
+    const user = await User.findOne({ userId: employeeId });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    let sheet = await GoalSheet.findOne({ employeeId: user._id, cycle });
+    
+    if (sheet) {
+      if (sheet.isLocked) return res.status(403).json({ message: 'Goal sheet is locked' });
+      if (goals) sheet.goals = goals;
       sheet.status = 'Pending_Approval';
       await sheet.save();
     } else {
