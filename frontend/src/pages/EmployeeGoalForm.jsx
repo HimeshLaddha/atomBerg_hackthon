@@ -125,29 +125,32 @@ const EmployeeGoalForm = ({ existingSheet, onSuccess }) => {
             <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center">
               <span className="bg-indigo-100 text-indigo-800 w-6 h-6 rounded-full flex items-center justify-center text-sm mr-2">{index + 1}</span>
               Goal Details
+              {goal.isShared && (
+                <span className="ml-3 inline-flex items-center px-2 py-0.5 text-xs font-bold bg-blue-100 text-blue-700 rounded-full border border-blue-200">
+                  📡 Shared KPI — Title & Target locked by HR
+                </span>
+              )}
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Thrust Area</label>
-                <input 
-                  type="text" 
-                  value={goal.thrustArea} 
-                  onChange={(e) => handleChange(goal.id, 'thrustArea', e.target.value)} 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 bg-white" 
-                  required 
-                />
+                {goal.isShared ? (
+                  <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100 text-gray-600 text-sm cursor-not-allowed">{goal.thrustArea}</div>
+                ) : (
+                  <input type="text" value={goal.thrustArea} onChange={(e) => handleChange(goal.id, 'thrustArea', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 bg-white" required />
+                )}
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Goal Title</label>
-                <input 
-                  type="text" 
-                  value={goal.title} 
-                  onChange={(e) => handleChange(goal.id, 'title', e.target.value)} 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 bg-white" 
-                  required 
-                />
+                {goal.isShared ? (
+                  <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100 text-gray-600 text-sm cursor-not-allowed">{goal.title}</div>
+                ) : (
+                  <input type="text" value={goal.title} onChange={(e) => handleChange(goal.id, 'title', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 bg-white" required />
+                )}
               </div>
 
               <div className="md:col-span-2">
@@ -162,13 +165,14 @@ const EmployeeGoalForm = ({ existingSheet, onSuccess }) => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Unit of Measurement</label>
-                <select 
-                  value={goal.uomType} 
-                  onChange={(e) => handleChange(goal.id, 'uomType', e.target.value)} 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 bg-white"
-                >
-                  {UOM_TYPES.map(type => <option key={type} value={type}>{type.replace('_', ' ')}</option>)}
-                </select>
+                {goal.isShared ? (
+                  <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100 text-gray-600 text-sm cursor-not-allowed">{goal.uomType.replace('_', ' ')}</div>
+                ) : (
+                  <select value={goal.uomType} onChange={(e) => handleChange(goal.id, 'uomType', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                    {UOM_TYPES.map(type => <option key={type} value={type}>{type.replace('_', ' ')}</option>)}
+                  </select>
+                )}
               </div>
 
               <div>

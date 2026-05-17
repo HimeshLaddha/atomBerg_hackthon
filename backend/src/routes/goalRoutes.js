@@ -3,6 +3,7 @@ import GoalSheet from '../models/GoalSheet.js';
 import AuditLog from '../models/AuditLog.js';
 import User from '../models/User.js';
 import { appendAuditLog } from '../utils/auditLogger.js';
+import { sanitizeGoals } from '../utils/goalSanitizer.js';
 
 const router = express.Router();
 const ACTIVE_CYCLE = '2026-H1';
@@ -192,11 +193,11 @@ router.post('/save', async (req, res) => {
 
     if (sheet) {
       if (sheet.isLocked) return res.status(403).json({ message: 'Goal sheet is locked and cannot be edited.' });
-      sheet.goals = goals;
+      sheet.goals = sanitizeGoals(goals);
       sheet.status = 'Draft';
       await sheet.save();
     } else {
-      sheet = await GoalSheet.create({ employeeId: user._id, cycle, status: 'Draft', goals });
+      sheet = await GoalSheet.create({ employeeId: user._id, cycle, status: 'Draft', goals: sanitizeGoals(goals) });
     }
 
     res.status(200).json(sheet);
@@ -325,6 +326,11 @@ router.put('/review/:sheetId', async (req, res) => {
 router.put('/quarterly/:sheetId', async (req, res) => {
   const { goalId, quarter, actualAchievement, status, changedBy } = req.body;
 
+  const VALID_QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'];
+  if (!VALID_QUARTERS.includes(quarter)) {
+    return res.status(400).json({ message: `Invalid quarter: ${quarter}` });
+  }
+
   try {
     const sheet = await GoalSheet.findById(req.params.sheetId);
     if (!sheet) return res.status(404).json({ message: 'Sheet not found' });
@@ -335,33 +341,44 @@ router.put('/quarterly/:sheetId', async (req, res) => {
     const goal = sheet.goals.id(goalId);
     if (!goal) return res.status(404).json({ message: 'Goal not found' });
 
-    const oldAchievement = goal.quarterlyAchievements[quarter]?.actualAchievement;
-    const oldStatus = goal.quarterlyAchievements[quarter]?.status;
+    const oldAchievement = goal.quarterlyAchievements?.[quarter]?.actualAchievement ?? '';
+    const oldStatus = goal.quarterlyAchievements?.[quarter]?.status ?? 'Not Started';
 
-    goal.quarterlyAchievements[quarter].actualAchievement = actualAchievement;
-    goal.quarterlyAchievements[quarter].status = status;
+    // Use $set with dot-notation to only touch this specific quarter —
+    // avoids the full re-save which coerces untouched quarterlyAchievement
+    // sub-docs to primitive '' and triggers Mongoose validation failure.
+    const goalIndex = sheet.goals.findIndex(g => g._id.toString() === goalId);
+    if (goalIndex === -1) return res.status(404).json({ message: 'Goal index not found' });
 
-    await sheet.save();
+    const updatePath = `goals.${goalIndex}.quarterlyAchievements.${quarter}`;
+    const updatedSheet = await GoalSheet.findByIdAndUpdate(
+      req.params.sheetId,
+      {
+        $set: {
+          // Replace the entire quarter sub-doc in one operation.
+          // This safely overwrites the corrupt "" primitive that older
+          // draft saves wrote, since MongoDB cannot dot-navigate into a string.
+          [updatePath]: {
+            actualAchievement: actualAchievement ?? '',
+            status: status ?? 'Not Started',
+            managerComment: goal.quarterlyAchievements?.[quarter]?.managerComment ?? ''
+          }
+        }
+      },
+      { new: true, runValidators: false }
+    );
 
-    // PROMPT 1.4: Audit the post-lock mutation
+    // Audit the change
     await appendAuditLog({
       goalSheetId: sheet._id,
       changedByUserId: changedBy,
       changes: [
-        {
-          field: `goals["${goal.title}"].${quarter}.actualAchievement`,
-          oldValue: oldAchievement ?? '',
-          newValue: actualAchievement
-        },
-        {
-          field: `goals["${goal.title}"].${quarter}.status`,
-          oldValue: oldStatus ?? 'Not Started',
-          newValue: status
-        }
-      ].filter(c => c.oldValue !== c.newValue) // only log real changes
+        { field: `goals["${goal.title}"].${quarter}.actualAchievement`, oldValue: oldAchievement, newValue: actualAchievement },
+        { field: `goals["${goal.title}"].${quarter}.status`, oldValue: oldStatus, newValue: status }
+      ].filter(c => c.oldValue !== c.newValue)
     });
 
-    res.status(200).json(sheet);
+    res.status(200).json(updatedSheet);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
