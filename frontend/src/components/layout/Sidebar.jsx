@@ -36,8 +36,8 @@ const NAV_CONFIG = {
     ]
   },
   'Admin/HR': {
-    gradient: 'from-orange-500 to-rose-600',
-    badge: 'bg-orange-100 text-orange-700',
+    gradient: 'from-blue-500 to-indigo-700',
+    badge: 'bg-blue-100 text-blue-700',
     links: [
       {
         name: 'Governance Panel',

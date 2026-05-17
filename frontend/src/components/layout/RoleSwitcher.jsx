@@ -17,8 +17,8 @@ const ROLE_META = {
   },
   'Admin/HR': {
     icon: '⚙️',
-    color: 'from-orange-500 to-rose-600',
-    bg: 'bg-orange-50 text-orange-700 border-orange-200',
+    color: 'from-blue-500 to-indigo-700',
+    bg: 'bg-blue-50 text-blue-700 border-blue-200',
     desc: 'Governance & Analytics'
   }
 };

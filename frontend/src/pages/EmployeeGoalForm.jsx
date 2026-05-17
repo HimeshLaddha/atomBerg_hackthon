@@ -76,7 +76,7 @@ const EmployeeGoalForm = ({ existingSheet, onSuccess }) => {
         goals: goals.map(({ id, _id, ...rest }) => ({ ...rest, goalId: id.toString() }))
       });
       setMessage('Goal sheet submitted successfully for approval!');
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess(); 
     } catch (error) {
       console.error(error);
       setMessage(error.response?.data?.message || 'Failed to submit goal sheet');
