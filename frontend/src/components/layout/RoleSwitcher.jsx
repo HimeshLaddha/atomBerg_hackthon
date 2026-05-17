@@ -38,13 +38,28 @@ const RoleSwitcher = () => {
   const roles = Object.keys(ROLE_META);
   const currentMeta = ROLE_META[activeRoleName];
 
+  const getRoleRoute = (role) => {
+    if (role === 'Employee' || role === 'Employee (Diana)') return '/employee/goals';
+    if (role === 'Manager (L1)') return '/manager/dashboard';
+    if (role === 'Admin/HR') return '/admin/overview';
+    return '/employee/goals';
+  };
+
   const handleRoleSwitch = (role) => {
     switchRole(role);
     setOpen(false);
-    if (role === 'Employee' || role === 'Employee (Diana)') navigate('/employee/goals');
-    else if (role === 'Manager (L1)') navigate('/manager/dashboard');
-    else if (role === 'Admin/HR') navigate('/admin/overview');
+    navigate(getRoleRoute(role));
   };
+
+  // On mount: if the stored role's canonical route doesn't match current URL, redirect.
+  // This fixes the "refresh resets to Employee URL" problem.
+  useEffect(() => {
+    const correctRoute = getRoleRoute(activeRoleName);
+    const currentPath = window.location.pathname;
+    if (!currentPath.startsWith(correctRoute)) {
+      navigate(correctRoute, { replace: true });
+    }
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {

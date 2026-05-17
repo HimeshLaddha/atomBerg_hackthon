@@ -11,11 +11,17 @@ export const UserProvider = ({ children }) => {
     'Admin/HR': { userId: 'EMP-001', name: 'Alice Admin', role: 'Admin', department: 'Human Resources' }
   };
 
-  const [activeRoleName, setActiveRoleName] = useState('Employee');
-  const [activeUser, setActiveUser] = useState(MOCK_USERS['Employee']);
+  // Restore last active role from localStorage so refresh doesn't reset to Employee
+  const savedRole = localStorage.getItem('activeRoleName');
+  const initialRole = (savedRole && MOCK_USERS[savedRole]) ? savedRole : 'Employee';
+
+  const [activeRoleName, setActiveRoleName] = useState(initialRole);
+  const [activeUser, setActiveUser] = useState(MOCK_USERS[initialRole]);
 
   useEffect(() => {
     setActiveUser(MOCK_USERS[activeRoleName]);
+    // Persist to localStorage on every role change
+    localStorage.setItem('activeRoleName', activeRoleName);
   }, [activeRoleName]);
 
   const switchRole = (roleName) => {

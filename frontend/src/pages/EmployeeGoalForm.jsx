@@ -15,14 +15,20 @@ const defaultGoal = {
 
 const EmployeeGoalForm = ({ existingSheet, onSuccess }) => {
   const { activeUser } = useContext(UserContext);
-  
-  const initialGoals = existingSheet?.goals?.length > 0 
-    ? existingSheet.goals.map(g => ({ ...g, id: g.goalId || Date.now() + Math.random() })) 
+
+  const buildGoals = (sheet) => sheet?.goals?.length > 0
+    ? sheet.goals.map(g => ({ ...g, id: g.goalId || `${Date.now()}-${Math.random()}` }))
     : [{ ...defaultGoal, id: Date.now() }];
 
-  const [goals, setGoals] = useState(initialGoals);
+  const [goals, setGoals] = useState(() => buildGoals(existingSheet));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');
+
+  // Wipe & rebuild form whenever the active user switches — prevents data bleed
+  useEffect(() => {
+    setGoals(buildGoals(existingSheet));
+    setMessage('');
+  }, [activeUser?.userId]);
 
   const totalWeightage = goals.reduce((sum, g) => sum + (Number(g.weightage) || 0), 0);
   const isTotalValid = totalWeightage === 100;

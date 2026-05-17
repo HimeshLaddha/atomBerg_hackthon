@@ -4,127 +4,200 @@ import axios from 'axios';
 import ManagerReview from './ManagerReview';
 import ManagerTrackingReview from './ManagerTrackingReview';
 
+const STATUS_BADGE = {
+  'Not Started': 'bg-gray-100 text-gray-600',
+  'Draft':       'bg-amber-100 text-amber-700',
+  'Pending_Approval': 'bg-yellow-100 text-yellow-800',
+  'Approved':    'bg-green-100 text-green-700',
+};
+
 const ManagerDashboard = () => {
   const { activeUser } = useContext(UserContext);
-  const [activeTab, setActiveTab] = useState('phase1'); // 'phase1' | 'phase2'
-  const [sheets, setSheets] = useState({ pending: [], approved: [] });
+  const [activeTab, setActiveTab] = useState('phase1');
+  const [subordinates, setSubordinates] = useState([]);   // all direct reports with status
+  const [pendingSheets, setPendingSheets] = useState([]);  // full GoalSheet docs (Pending_Approval)
+  const [approvedSheets, setApprovedSheets] = useState([]); // full GoalSheet docs (Approved)
   const [loading, setLoading] = useState(true);
   const [selectedSheet, setSelectedSheet] = useState(null);
 
-  const fetchSheets = async () => {
+  const fetchAll = async () => {
     setLoading(true);
+    setSelectedSheet(null);
     try {
-      const [pendingRes, approvedRes] = await Promise.all([
+      const [subRes, pendingRes, approvedRes] = await Promise.all([
+        axios.get(`http://localhost:5000/api/goals/team/subordinates?managerId=${activeUser.userId}`),
         axios.get(`http://localhost:5000/api/goals/pending?managerId=${activeUser.userId}`),
         axios.get(`http://localhost:5000/api/goals/team-approved?managerId=${activeUser.userId}`)
       ]);
-      setSheets({
-        pending: pendingRes.data || [],
-        approved: approvedRes.data || []
-      });
-    } catch (error) {
-      console.error('Failed to fetch sheets', error);
+      setSubordinates(subRes.data || []);
+      setPendingSheets(pendingRes.data || []);
+      setApprovedSheets(approvedRes.data || []);
+    } catch (err) {
+      console.error('Manager fetch error:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSheets();
-    setSelectedSheet(null);
+    fetchAll();
   }, [activeUser.userId]);
+
+  // Find full sheet doc for a given subordinate
+  const getSheetForSub = (sub) => {
+    if (activeTab === 'phase1') {
+      return pendingSheets.find(s => s.employeeId?._id === sub._id || s.employeeId === sub._id) || null;
+    }
+    return approvedSheets.find(s => s.employeeId?._id === sub._id || s.employeeId === sub._id) || null;
+  };
 
   if (selectedSheet) {
     if (activeTab === 'phase1') {
       return (
-        <ManagerReview 
-          sheet={selectedSheet} 
-          onBack={() => setSelectedSheet(null)} 
-          onActionComplete={() => {
-            setSelectedSheet(null);
-            fetchSheets();
-          }}
-        />
-      );
-    } else {
-      return (
-        <ManagerTrackingReview 
-          sheet={selectedSheet} 
-          onBack={() => setSelectedSheet(null)} 
-          onActionComplete={() => {
-            fetchSheets(); // refresh data
-          }}
+        <ManagerReview
+          sheet={selectedSheet}
+          onBack={() => setSelectedSheet(null)}
+          onActionComplete={() => { setSelectedSheet(null); fetchAll(); }}
         />
       );
     }
+    return (
+      <ManagerTrackingReview
+        sheet={selectedSheet}
+        onBack={() => setSelectedSheet(null)}
+        onActionComplete={fetchAll}
+      />
+    );
   }
 
-  const currentSheets = activeTab === 'phase1' ? sheets.pending : sheets.approved;
+  const pendingCount = pendingSheets.length;
+  const approvedCount = approvedSheets.length;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      {/* Header */}
       <div className="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Team Dashboard</h1>
-          <p className="text-gray-500 mt-1">Manage approvals and quarterly milestones.</p>
+          <p className="text-gray-500 mt-1">
+            {subordinates.length} direct report{subordinates.length !== 1 ? 's' : ''} · {activeUser.name}
+          </p>
         </div>
+        <button onClick={fetchAll} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center space-x-1">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>Refresh</span>
+        </button>
       </div>
 
-      <div className="flex space-x-4 mb-6">
+      {/* Phase Tabs */}
+      <div className="flex space-x-2 mb-6">
         <button
           onClick={() => setActiveTab('phase1')}
-          className={`px-4 py-2 text-sm font-semibold rounded-md transition-all ${
-            activeTab === 'phase1'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          className={`px-5 py-2 text-sm font-semibold rounded-lg transition-all ${
+            activeTab === 'phase1' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          Phase 1: Goal Approvals ({sheets.pending.length})
+          Phase 1: Goal Approvals
+          {pendingCount > 0 && (
+            <span className={`ml-2 px-2 py-0.5 text-xs font-black rounded-full ${activeTab === 'phase1' ? 'bg-white text-indigo-600' : 'bg-yellow-400 text-white'}`}>
+              {pendingCount}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveTab('phase2')}
-          className={`px-4 py-2 text-sm font-semibold rounded-md transition-all ${
-            activeTab === 'phase2'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          className={`px-5 py-2 text-sm font-semibold rounded-lg transition-all ${
+            activeTab === 'phase2' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          Phase 2: Quarterly Check-ins ({sheets.approved.length})
+          Phase 2: Quarterly Check-ins
+          {approvedCount > 0 && (
+            <span className={`ml-2 px-2 py-0.5 text-xs font-black rounded-full ${activeTab === 'phase2' ? 'bg-white text-indigo-600' : 'bg-green-500 text-white'}`}>
+              {approvedCount}
+            </span>
+          )}
         </button>
       </div>
 
+      {/* Tabular Directory Layout */}
       {loading ? (
-        <div className="text-center py-10 text-gray-500">Loading goal sheets...</div>
-      ) : currentSheets.length === 0 ? (
-        <div className="text-center py-10 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-          No goal sheets found for this phase.
-        </div>
+        <div className="text-center py-12 text-gray-400">Loading team data...</div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {currentSheets.map(sheet => (
-            <div 
-              key={sheet._id} 
-              className="border border-gray-200 rounded-lg p-5 hover:border-indigo-500 hover:shadow-md cursor-pointer transition-all bg-white relative group"
-              onClick={() => setSelectedSheet(sheet)}
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="font-semibold text-gray-800">{sheet.employeeId.name}</h3>
-                  <p className="text-xs text-gray-500">{sheet.employeeId.department}</p>
-                </div>
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${activeTab === 'phase1' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
-                  {activeTab === 'phase1' ? 'Pending' : 'Locked & Approved'}
-                </span>
-              </div>
-              <div className="space-y-2 text-sm text-gray-600 mb-4">
-                <p><span className="font-medium text-gray-700">Cycle:</span> {sheet.cycle}</p>
-                <p><span className="font-medium text-gray-700">Total Goals:</span> {sheet.goals.length}</p>
-              </div>
-              <button className={`w-full py-2 font-medium rounded-md transition-colors text-sm ${activeTab === 'phase1' ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100' : 'bg-green-50 text-green-700 hover:bg-green-100'}`}>
-                {activeTab === 'phase1' ? 'Review Goals' : 'Start Check-in'}
-              </button>
-            </div>
-          ))}
+        <div className="overflow-x-auto border border-gray-200 rounded-xl">
+          <table className="min-w-full divide-y divide-gray-200 text-sm bg-white">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Employee Name</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Department</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Sheet Status</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Goals</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {subordinates.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="py-10 text-center text-gray-400">No direct reports found for this manager.</td>
+                </tr>
+              )}
+              {subordinates.map(sub => {
+                const sheet = getSheetForSub(sub);
+                const status = sub.goalSheetStatus || 'Not Started';
+                const canAction = activeTab === 'phase1'
+                  ? status === 'Pending_Approval'
+                  : status === 'Approved';
+
+                return (
+                  <tr key={sub._id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-5 py-4 font-semibold text-gray-900">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-sm flex-shrink-0">
+                          {sub.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{sub.name}</p>
+                          <p className="text-xs text-gray-400">{sub.userId}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 text-gray-500">{sub.department}</td>
+                    <td className="px-5 py-4">
+                      <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${STATUS_BADGE[status] || 'bg-gray-100 text-gray-600'}`}>
+                        {status.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-gray-500">
+                      {sheet ? `${sheet.goals.length} goals` : '—'}
+                    </td>
+                    <td className="px-5 py-4">
+                      {canAction && sheet ? (
+                        <button
+                          onClick={() => setSelectedSheet(sheet)}
+                          className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+                            activeTab === 'phase1'
+                              ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                              : 'bg-green-600 text-white hover:bg-green-700'
+                          }`}
+                        >
+                          {activeTab === 'phase1' ? 'Review & Approve' : 'Start Check-in'}
+                        </button>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">
+                          {status === 'Not Started' ? 'Not submitted' :
+                           status === 'Draft' ? 'Still drafting' :
+                           activeTab === 'phase1' && status === 'Approved' ? 'Already approved' :
+                           activeTab === 'phase2' && status === 'Pending_Approval' ? 'Not approved yet' :
+                           '—'}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
