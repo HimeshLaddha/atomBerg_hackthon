@@ -18,16 +18,26 @@ const escapeCell = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
 
 /** Triggers a browser file download from a plain-text CSV string. */
 const triggerDownload = (csvString, filename) => {
-  // Prefix with BOM for Excel UTF-8 compatibility
+  // Ensure filename ends with .csv
+  const finalFilename = filename.endsWith('.csv') ? filename : `${filename}.csv`;
+
+  // Use correct MIME type for Excel with UTF-8
   const blob = new Blob(['\ufeff' + csvString], { type: 'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
   const link = document.createElement('a');
+
   link.href = url;
-  link.download = filename;
+  link.download = finalFilename;
+  link.style.display = 'none';
+
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  
+  // Defer cleanup to allow browser to register the download name
+  setTimeout(() => {
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, 200);
 };
 
 // ─── BRD-spec export: one row per (employee, goal, quarter) ──────────────────
