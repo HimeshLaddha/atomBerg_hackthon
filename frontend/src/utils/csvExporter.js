@@ -18,12 +18,12 @@ const escapeCell = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
 
 /** Triggers a browser file download from a plain-text CSV string. */
 const triggerDownload = (csvString, filename) => {
-  const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+  // Prefix with BOM for Excel UTF-8 compatibility
+  const blob = new Blob(['\ufeff' + csvString], { type: 'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', filename);
-  link.style.visibility = 'hidden';
+  link.href = url;
+  link.download = filename;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

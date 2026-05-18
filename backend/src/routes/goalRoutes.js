@@ -139,7 +139,14 @@ router.get('/team-approved', async (req, res) => {
 router.get('/approved', async (req, res) => {
   try {
     const sheets = await GoalSheet.find({ status: 'Approved' })
-      .populate('employeeId', 'name email department userId');
+      .populate({
+        path: 'employeeId',
+        select: 'name email department userId managerId',
+        populate: {
+          path: 'managerId',
+          select: 'name email userId'
+        }
+      });
     res.status(200).json(sheets.filter(s => s.employeeId != null));
   } catch (error) {
     res.status(500).json({ message: error.message });
