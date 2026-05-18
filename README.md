@@ -80,31 +80,31 @@ The login page (`/login`) is a dark-themed, split-panel interface:
 │   Welcome back         │  ┌──────────────────────────────┐    │
 │                        │  │ JD  John Doe  [Employee]     │    │
 │   USERNAME             │  │     Software Engineer        │    │
-│   [john.doe        ]   │  │     EMP-2026-881  Phase 1&2  │    │
+│   [john.doe        ]   │  │     EMP-003  Phase 1&2       │    │
 │                        │  └──────────────────────────────┘    │
 │   PASSWORD             │  ┌──────────────────────────────┐    │
 │   [••••••••    👁  ]   │  │ JS  Jane Smith [Manager]     │    │
 │                        │  │     Engineering Manager       │    │
-│   [ Sign In ]          │  │     MGR-2026-042  Approvals  │    │
+│   [ Sign In ]          │  │     EMP-002  Approvals       │    │
 │                        │  └──────────────────────────────┘    │
 │                        │  ┌──────────────────────────────┐    │
 │                        │  │ AR  Alex Rivera [Admin]      │    │
 │                        │  │     HR Director               │    │
-│                        │  │     ADM-2026-001  KPI/Audit  │    │
+│                        │  │     EMP-001  KPI/Audit       │    │
 │                        │  └──────────────────────────────┘    │
 │                        │                                       │
 │                        │  CREDENTIAL REFERENCE                 │
-│                        │  John · jane · Alex usernames & pass  │
+│                        │  John · Jane · Alex usernames & pass  │
 └────────────────────────┴──────────────────────────────────────┘
 ```
 
-### Demo Credentials
+### Demo Credentials (Primary Persona Mappings)
 
-| Name | Username | Password | Role | ID |
-|---|---|---|---|---|
-| John Doe | `john.doe` | `emp@2026` | Employee | EMP-2026-881 |
-| Jane Smith | `jane.smith` | `mgr@2026` | Manager | MGR-2026-042 |
-| Alex Rivera | `alex.rivera` | `adm@2026` | Admin | ADM-2026-001 |
+| Name | Username | Password | Role | ID | Department | Focus / Sandbox Tab |
+|---|---|---|---|---|---|---|
+| **John Doe** | `john.doe` | `emp@2026` | Employee | `EMP-003` | Engineering | Phase 1 & 2 Goal Tracking |
+| **Jane Smith** | `jane.smith` | `mgr@2026` | Manager | `EMP-002` | Engineering | Approvals & Quarterly Check-ins |
+| **Alex Rivera** | `alex.rivera` | `adm@2026` | Admin | `EMP-001` | Human Resources | Shared KPIs, Escalations, Analytics & Audit |
 
 ### How to Log In
 
@@ -581,18 +581,23 @@ cd backend
 npm run seed
 ```
 
-**What it creates:**
+**What it creates (Total 17 users):**
 
-| User | ID | Role | Reports To |
-|---|---|---|---|
-| Alice Admin | EMP-001 | Admin/HR | — |
-| Bob Manager | EMP-002 | Manager (L1) | Alice |
-| Charlie Employee | EMP-003 | Employee | Bob |
-| Diana Employee | EMP-004 | Employee | Bob |
+| Core Seeded User | ID | Role | Reports To | Department |
+|---|---|---|---|---|
+| **Alex Rivera** | `EMP-001` | Admin/HR | — | Human Resources |
+| **Jane Smith** | `EMP-002` | Manager (L1) | Alex Rivera | Engineering |
+| **John Doe** | `EMP-003` | Employee | Jane Smith | Engineering |
+| **Diana Employee** | `EMP-004` | Employee | Jane Smith | Engineering |
 
-Also creates a **Draft GoalSheet** for Charlie with 2 goals (properly initialized `quarterlyAchievements` objects).
+*Also seeds 13 additional accounts (Priya Kapoor, Sam O'Brien, Bob Martinez, Nina Patel, Raj Mehta, and employees across Sales, Marketing, and Finance) to test org-wide analytics and escalations.*
 
-> **Note:** The login persona cards use new dummy IDs (`EMP-2026-881`, `MGR-2026-042`, `ADM-2026-001`) that are mapped to the existing backend users. The session's `userId` field is used for all API calls.
+Also pre-populates:
+1. **Goal Sheet for John Doe (`EMP-003`):** Approved & locked state featuring fully pre-tracked actuals and manager comments for Q1–Q4 across all UoM math types (Numeric, Percentage, Zero-based, Timeline).
+2. **Goal Sheet for Diana Employee (`EMP-004`):** In a `Pending_Approval` state to allow immediate testing of manager inline reviews and approval routing.
+3. **Goal Sheet for Charlie Employee (`EMP-003`):** Re-mapped cleanly to John Doe (`EMP-003`) to ensure absolute session sync.
+
+> **Note:** The login portal quick-access cards and the full credentials reference strip are mapped directly to these database records, providing a zero-friction playground for evaluators.
 
 ---
 
