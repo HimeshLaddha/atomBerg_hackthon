@@ -1,8 +1,11 @@
 // src/config/api.js
 // Single source of truth for the backend base URL.
-// Vite replaces import.meta.env.VITE_API_URL at build time.
-// In development: set VITE_API_URL=http://localhost:5000 in frontend/.env
-// In production:  set VITE_API_URL=https://your-app.onrender.com in Vercel dashboard
+// Strips any trailing slash so that both:
+//   VITE_API_URL=https://goalsync-api.onrender.com
+//   VITE_API_URL=https://goalsync-api.onrender.com/   ← (trailing slash)
+// produce correct paths like: https://goalsync-api.onrender.com/api/goals
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const raw = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API = raw.replace(/\/+$/, ''); // strip trailing slash(es)
 export default API;
+
