@@ -11,21 +11,22 @@ const ManagerTrackingReview = ({ sheet, onBack, onActionComplete }) => {
   const [message, setMessage] = useState('');
   const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
 
-  const handleSaveComment = async (goalId, comment) => {
+  const handleSaveComment = async (goalId, comment, status) => {
     setMessage('');
     try {
       await axios.put(`${API}/api/goals/manager-checkin/${sheet._id}`, {
         goalId,
         quarter: activeQuarter,
         managerComment: comment,
+        status,              // ← now persists the manager-set status too
         changedBy: activeUser.userId
       });
-      setMessage('Check-in comment saved successfully.');
+      setMessage('Check-in saved successfully.');
       setTimeout(() => setMessage(''), 3000);
-      // Let it quietly succeed, the user doesn't need a full refresh if we map state, but for MVP we trigger the refresh if needed or just show message.
+      if (onActionComplete) onActionComplete(); // refresh parent data
     } catch (error) {
       console.error(error);
-      setMessage('Failed to save comment: ' + (error.response?.data?.message || error.message));
+      setMessage('Failed to save: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -148,9 +149,10 @@ const ManagerTrackingReview = ({ sheet, onBack, onActionComplete }) => {
 
                   {/* Manager Check-in Form Component */}
                   <div className="mt-4">
-                    <CheckInCommentForm 
-                      initialComment={managerComment} 
-                      onSave={(comment) => handleSaveComment(goal._id, comment)} 
+                    <CheckInCommentForm
+                      initialComment={managerComment}
+                      initialStatus={status}
+                      onSave={(comment, newStatus) => handleSaveComment(goal._id, comment, newStatus)}
                     />
                   </div>
                 </div>

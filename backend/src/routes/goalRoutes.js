@@ -403,11 +403,16 @@ router.put('/quarterly/:sheetId', async (req, res) => {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PUT /api/goals/manager-checkin/:sheetId — Manager saves check-in comments
+// PUT /api/goals/manager-checkin/:sheetId — Manager saves check-in + status
 // Captured in AuditLog as post-lock modification
 // ─────────────────────────────────────────────────────────────────────────────
 router.put('/manager-checkin/:sheetId', async (req, res) => {
-  const { goalId, quarter, managerComment, changedBy } = req.body;
+  const { goalId, quarter, managerComment, status, changedBy } = req.body;
+
+  const VALID_QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'];
+  if (!VALID_QUARTERS.includes(quarter)) {
+    return res.status(400).json({ message: `Invalid quarter: ${quarter}` });
+  }
 
   try {
     const sheet = await GoalSheet.findById(req.params.sheetId);
@@ -417,12 +422,19 @@ router.put('/manager-checkin/:sheetId', async (req, res) => {
     if (!goal) return res.status(404).json({ message: 'Goal not found' });
 
     const oldComment = goal.quarterlyAchievements[quarter]?.managerComment ?? '';
+    const oldStatus  = goal.quarterlyAchievements[quarter]?.status ?? 'Not Started';
 
     // Guard: initialize the quarter sub-doc if it is missing or corrupt
     if (!goal.quarterlyAchievements[quarter] || typeof goal.quarterlyAchievements[quarter] !== 'object') {
       goal.quarterlyAchievements[quarter] = { actualAchievement: '', status: 'Not Started', managerComment: '' };
     }
+
     goal.quarterlyAchievements[quarter].managerComment = managerComment ?? '';
+
+    // Persist manager-set status if provided (Completed / On Track / Not Started)
+    if (status && ['Not Started', 'On Track', 'Completed'].includes(status)) {
+      goal.quarterlyAchievements[quarter].status = status;
+    }
 
     await sheet.save();
 
@@ -434,6 +446,11 @@ router.put('/manager-checkin/:sheetId', async (req, res) => {
           field: `goals["${goal.title}"].${quarter}.managerComment`,
           oldValue: oldComment,
           newValue: managerComment
+        },
+        {
+          field: `goals["${goal.title}"].${quarter}.status`,
+          oldValue: oldStatus,
+          newValue: status ?? oldStatus
         }
       ].filter(c => c.oldValue !== c.newValue)
     });
@@ -443,6 +460,7 @@ router.put('/manager-checkin/:sheetId', async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
+
 
 
 // ─────────────────────────────────────────────────────────────────────────────

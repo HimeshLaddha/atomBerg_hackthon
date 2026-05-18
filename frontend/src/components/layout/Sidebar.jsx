@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { UserContext } from '../../contexts/UserContext';
 import { Link, useLocation } from 'react-router-dom';
 
+// Keys match sessionUser.role values from UserContext / Login.jsx
 const NAV_CONFIG = {
   'Employee': {
     gradient: 'from-violet-500 to-indigo-600',
@@ -19,7 +20,8 @@ const NAV_CONFIG = {
       }
     ]
   },
-  'Manager (L1)': {
+  // 'Manager' matches sessionUser.role — was previously 'Manager (L1)'
+  'Manager': {
     gradient: 'from-emerald-500 to-teal-600',
     badge: 'bg-emerald-100 text-emerald-700',
     links: [
@@ -35,7 +37,8 @@ const NAV_CONFIG = {
       }
     ]
   },
-  'Admin/HR': {
+  // 'Admin' matches sessionUser.role — was previously 'Admin/HR'
+  'Admin': {
     gradient: 'from-blue-500 to-indigo-700',
     badge: 'bg-blue-100 text-blue-700',
     links: [
@@ -64,9 +67,11 @@ const NAV_CONFIG = {
 };
 
 const Sidebar = () => {
-  const { activeRoleName, activeUser } = useContext(UserContext);
+  const { activeUser } = useContext(UserContext);
   const location = useLocation();
-  const config = NAV_CONFIG[activeRoleName] || NAV_CONFIG['Employee'];
+  // Use sessionUser.role directly — matches NAV_CONFIG keys ('Employee','Manager','Admin')
+  const role = activeUser?.role || 'Employee';
+  const config = NAV_CONFIG[role] || NAV_CONFIG['Employee'];
 
   return (
     <div className="w-64 bg-white border-r border-gray-100 h-[calc(100vh-64px)] fixed left-0 flex flex-col shadow-sm">
@@ -121,7 +126,7 @@ const Sidebar = () => {
       {/* Flow Reference Key */}
       <div className="m-4 p-3 bg-gray-50 border border-gray-100 rounded-xl">
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Current Flow</p>
-        {(activeRoleName === 'Employee' || activeRoleName === 'Employee (Diana)') && (
+        {role === 'Employee' && (
           <div className="space-y-1.5 text-xs text-gray-500">
             <div className="flex items-center space-x-2">
               <span className="w-1.5 h-1.5 rounded-full bg-violet-400"></span>
@@ -133,7 +138,7 @@ const Sidebar = () => {
             </div>
           </div>
         )}
-        {activeRoleName === 'Manager (L1)' && (
+        {role === 'Manager' && (
           <div className="space-y-1.5 text-xs text-gray-500">
             <div className="flex items-center space-x-2">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
@@ -145,7 +150,7 @@ const Sidebar = () => {
             </div>
           </div>
         )}
-        {activeRoleName === 'Admin/HR' && (
+        {role === 'Admin' && (
           <div className="space-y-1.5 text-xs text-gray-500">
             <div className="flex items-center space-x-2">
               <span className="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
