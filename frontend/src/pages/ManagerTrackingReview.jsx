@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { UserContext } from '../contexts/UserContext';
 import axios from 'axios';
-import { calculateProgress } from '../utils/progressEngine';
+import { calculateProgress, calculateRawProgress } from '../utils/progressEngine';
 import CheckInCommentForm from '../components/tracking/CheckInCommentForm';
 
 const ManagerTrackingReview = ({ sheet, onBack, onActionComplete }) => {
@@ -69,7 +69,9 @@ const ManagerTrackingReview = ({ sheet, onBack, onActionComplete }) => {
           const actual = currentQuarterData.actualAchievement || '';
           const status = currentQuarterData.status || 'Not Started';
           const managerComment = currentQuarterData.managerComment || '';
-          
+
+          // rawScore for display badge; progressScore (clamped) for bar CSS width
+          const rawScore     = calculateRawProgress(goal.uomType, goal.target, actual);
           const progressScore = calculateProgress(goal.uomType, goal.target, actual);
 
           return (
@@ -121,17 +123,24 @@ const ManagerTrackingReview = ({ sheet, onBack, onActionComplete }) => {
                     </div>
 
                     <div className="mt-4 pt-4 border-t border-gray-100">
-                      <div className="flex justify-between items-end mb-1.5">
+                      <div className="flex justify-between items-center mb-1.5">
                         <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Computed Score</span>
-                        <span className={`text-lg font-black ${progressScore === 100 ? 'text-green-500' : progressScore > 0 ? 'text-indigo-600' : 'text-gray-400'}`}>
-                          {progressScore}%
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {rawScore > 100 && (
+                            <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-green-100 text-green-700 border border-green-200">
+                              ★ Over
+                            </span>
+                          )}
+                          <span className={`text-lg font-black ${rawScore >= 100 ? 'text-green-500' : rawScore > 0 ? 'text-indigo-600' : 'text-gray-400'}`}>
+                            {rawScore}%
+                          </span>
+                        </div>
                       </div>
                       <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden shadow-inner">
-                        <div 
+                        <div
                           className={`h-2.5 rounded-full transition-all duration-500 ease-out ${progressScore === 100 ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : progressScore > 0 ? 'bg-indigo-500' : 'bg-gray-300'}`}
                           style={{ width: `${progressScore}%` }}
-                        ></div>
+                        />
                       </div>
                     </div>
                   </div>

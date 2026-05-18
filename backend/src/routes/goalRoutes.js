@@ -124,7 +124,7 @@ router.get('/team-approved', async (req, res) => {
     if (!manager) return res.status(404).json({ message: 'Manager not found' });
 
     const approvedSheets = await GoalSheet.find({ status: 'Approved' })
-      .populate({ path: 'employeeId', match: { managerId: manager._id }, select: 'name email department' });
+      .populate({ path: 'employeeId', match: { managerId: manager._id }, select: 'name email department userId' });
 
     res.status(200).json(approvedSheets.filter(s => s.employeeId != null));
   } catch (error) {
@@ -139,7 +139,7 @@ router.get('/team-approved', async (req, res) => {
 router.get('/approved', async (req, res) => {
   try {
     const sheets = await GoalSheet.find({ status: 'Approved' })
-      .populate('employeeId', 'name email department');
+      .populate('employeeId', 'name email department userId');
     res.status(200).json(sheets.filter(s => s.employeeId != null));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -400,7 +400,12 @@ router.put('/manager-checkin/:sheetId', async (req, res) => {
     if (!goal) return res.status(404).json({ message: 'Goal not found' });
 
     const oldComment = goal.quarterlyAchievements[quarter]?.managerComment ?? '';
-    goal.quarterlyAchievements[quarter].managerComment = managerComment;
+
+    // Guard: initialize the quarter sub-doc if it is missing or corrupt
+    if (!goal.quarterlyAchievements[quarter] || typeof goal.quarterlyAchievements[quarter] !== 'object') {
+      goal.quarterlyAchievements[quarter] = { actualAchievement: '', status: 'Not Started', managerComment: '' };
+    }
+    goal.quarterlyAchievements[quarter].managerComment = managerComment ?? '';
 
     await sheet.save();
 
@@ -430,7 +435,7 @@ router.post('/shared-kpi', async (req, res) => {
   const { title, thrustArea, uomType, target, department } = req.body;
 
   try {
-    const users = await User.find({ department, role: { $ne: 'Admin/HR' } });
+    const users = await User.find({ department, role: { $ne: 'Admin' } });
 
     const sharedGoal = {
       goalId: `KPI-${Date.now()}`,
@@ -482,7 +487,12 @@ router.post('/checkin', async (req, res) => {
     if (!goal) return res.status(404).json({ message: 'Goal not found' });
 
     const oldComment = goal.quarterlyAchievements[quarter]?.managerComment ?? '';
-    goal.quarterlyAchievements[quarter].managerComment = managerComment;
+
+    // Guard: initialize the quarter sub-doc if it is missing or corrupt
+    if (!goal.quarterlyAchievements[quarter] || typeof goal.quarterlyAchievements[quarter] !== 'object') {
+      goal.quarterlyAchievements[quarter] = { actualAchievement: '', status: 'Not Started', managerComment: '' };
+    }
+    goal.quarterlyAchievements[quarter].managerComment = managerComment ?? '';
 
     await sheet.save();
 

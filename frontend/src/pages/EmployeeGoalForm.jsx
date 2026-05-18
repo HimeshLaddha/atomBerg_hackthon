@@ -121,7 +121,7 @@ const EmployeeGoalForm = ({ existingSheet, onSuccess }) => {
         {goals.map((goal, index) => (
           <div key={goal.id} className="p-5 border border-gray-200 rounded-lg bg-gray-50 relative group">
             <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-              {goals.length > 1 && (
+              {goals.length > 1 && !goal.isShared && (
                 <button type="button" onClick={() => handleRemoveGoal(goal.id)} className="text-red-500 hover:text-red-700 text-sm font-medium bg-red-50 px-2 py-1 rounded">
                   Remove Goal
                 </button>
@@ -161,12 +161,16 @@ const EmployeeGoalForm = ({ existingSheet, onSuccess }) => {
 
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea 
-                  value={goal.description} 
-                  onChange={(e) => handleChange(goal.id, 'description', e.target.value)} 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 bg-white"
-                  rows="2"
-                />
+                {goal.isShared ? (
+                  <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100 text-gray-600 text-sm cursor-not-allowed min-h-[64px]">{goal.description || '—'}</div>
+                ) : (
+                  <textarea
+                    value={goal.description}
+                    onChange={(e) => handleChange(goal.id, 'description', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                    rows="2"
+                  />
+                )}
               </div>
 
               <div>
@@ -183,14 +187,18 @@ const EmployeeGoalForm = ({ existingSheet, onSuccess }) => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Target</label>
-                <input 
-                  type="text" 
-                  value={goal.target} 
-                  onChange={(e) => handleChange(goal.id, 'target', e.target.value)} 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 bg-white" 
-                  required 
-                  placeholder="e.g., 5000, 100%, 2026-12-31"
-                />
+                {goal.isShared ? (
+                  <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100 text-gray-600 text-sm cursor-not-allowed">{goal.target}</div>
+                ) : (
+                  <input
+                    type="text"
+                    value={goal.target}
+                    onChange={(e) => handleChange(goal.id, 'target', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                    required
+                    placeholder="e.g., 5000, 100%, 2026-12-31"
+                  />
+                )}
               </div>
 
               <div className="md:col-span-2 border-t border-gray-200 mt-2 pt-4">

@@ -50,20 +50,16 @@ const ProgressBar = ({ pct, color = 'bg-indigo-500' }) => (
 // ─────────────────────────────────────────────────────────────────────────────
 const CompletionTrackerTab = () => {
   const [sheets, setSheets] = useState([]);
-  const [allSheets, setAllSheets] = useState([]); // includes non-approved for full picture
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [approvedRes, pendingRes] = await Promise.all([
-        axios.get(`${API}/api/goals/approved`),
-        axios.get(`${API}/api/goals/pending?managerId=EMP-002`).catch(() => ({ data: [] })),
-      ]);
-      setSheets(approvedRes.data ?? []);
-      setAllSheets([...(approvedRes.data ?? []), ...(pendingRes.data ?? [])]);
+      // /approved returns all org-wide approved GoalSheets with populated employeeId
+      const res = await axios.get(`${API}/api/goals/approved`);
+      setSheets(res.data ?? []);
     } catch (e) {
-      console.error(e);
+      console.error('CompletionTracker load error:', e);
     } finally {
       setLoading(false);
     }

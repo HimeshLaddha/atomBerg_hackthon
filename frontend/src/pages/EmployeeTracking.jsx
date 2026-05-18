@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { UserContext } from '../contexts/UserContext';
 import axios from 'axios';
-import { calculateProgress } from '../utils/progressEngine';
+import { calculateProgress, calculateRawProgress } from '../utils/progressEngine';
 import EmployeeGoalForm from './EmployeeGoalForm';
 
 const QUARTER_LABELS = [
@@ -127,6 +127,9 @@ const EmployeeTracking = ({ existingSheet, refreshSheet }) => {
           
           // Live local value takes priority so meter reacts instantly as user types
           const liveActual = localAchievements[`${goal._id}-${activeQuarter}`]?.actualAchievement ?? actual;
+          // rawScore can exceed 100 (overachievement) — used for the display badge
+          const rawScore     = calculateRawProgress(goal.uomType, goal.target, liveActual);
+          // clampedScore is always [0,100] — used for the progress bar CSS width
           const progressScore = calculateProgress(goal.uomType, goal.target, liveActual);
 
           return (
@@ -207,17 +210,38 @@ const EmployeeTracking = ({ existingSheet, refreshSheet }) => {
 
                   {/* Live Tracker Metric */}
                   <div className="mt-6 pt-4 border-t border-gray-100">
-                    <div className="flex justify-between items-end mb-1.5">
-                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Progress Score</span>
-                      <span className={`text-lg font-black ${progressScore === 100 ? 'text-green-500' : progressScore > 0 ? 'text-indigo-600' : 'text-gray-400'}`}>
-                        {progressScore}%
-                      </span>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <div>
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Progress Score</span>
+                        {/* UoM formula hint */}
+                        <span className="ml-2 text-[10px] text-gray-400 font-mono">
+                          ({goal.uomType === 'Numeric_Min' || goal.uomType === 'Percentage_Min' ? 'actual÷target' :
+                            goal.uomType === 'Numeric_Max' || goal.uomType === 'Percentage_Max' ? 'target÷actual' :
+                            goal.uomType === 'Zero-based' ? '0=100%' : 'date'})
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {rawScore > 100 && (
+                          <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-green-100 text-green-700 border border-green-200">
+                            ★ Overachieved
+                          </span>
+                        )}
+                        <span className={`text-lg font-black ${
+                          rawScore >= 100 ? 'text-green-500' : rawScore > 0 ? 'text-indigo-600' : 'text-gray-400'
+                        }`}>
+                          {rawScore}%
+                        </span>
+                      </div>
                     </div>
                     <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden shadow-inner">
-                      <div 
-                        className={`h-2.5 rounded-full transition-all duration-500 ease-out ${progressScore === 100 ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : progressScore > 0 ? 'bg-indigo-500' : 'bg-gray-300'}`}
+                      <div
+                        className={`h-2.5 rounded-full transition-all duration-500 ease-out ${
+                          progressScore === 100
+                            ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]'
+                            : progressScore > 0 ? 'bg-indigo-500' : 'bg-gray-300'
+                        }`}
                         style={{ width: `${progressScore}%` }}
-                      ></div>
+                      />
                     </div>
                   </div>
 
