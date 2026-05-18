@@ -3,6 +3,7 @@ import { UserContext } from '../contexts/UserContext';
 import axios from 'axios';
 import ManagerReview from './ManagerReview';
 import ManagerTrackingReview from './ManagerTrackingReview';
+import API from '../config/api';
 
 const STATUS_BADGE = {
   'Not Started': 'bg-gray-100 text-gray-600',
@@ -25,9 +26,9 @@ const ManagerDashboard = () => {
     setSelectedSheet(null);
     try {
       const [subRes, pendingRes, approvedRes] = await Promise.all([
-        axios.get(`http://localhost:5000/api/goals/team/subordinates?managerId=${activeUser.userId}`),
-        axios.get(`http://localhost:5000/api/goals/pending?managerId=${activeUser.userId}`),
-        axios.get(`http://localhost:5000/api/goals/team-approved?managerId=${activeUser.userId}`)
+        axios.get(`${API}/api/goals/team/subordinates?managerId=${activeUser.userId}`),
+        axios.get(`${API}/api/goals/pending?managerId=${activeUser.userId}`),
+        axios.get(`${API}/api/goals/team-approved?managerId=${activeUser.userId}`)
       ]);
       setSubordinates(subRes.data || []);
       setPendingSheets(pendingRes.data || []);

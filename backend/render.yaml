@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: goalsync-api
+    env: node
+    region: singapore  # closest to India — change to oregon/frankfurt as needed
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false   # set manually in Render dashboard — never commit secrets
+      - key: ALLOWED_ORIGINS
+        sync: false   # set to your Vercel URL after frontend deploys

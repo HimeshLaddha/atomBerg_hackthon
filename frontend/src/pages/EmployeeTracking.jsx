@@ -3,6 +3,7 @@ import { UserContext } from '../contexts/UserContext';
 import axios from 'axios';
 import { calculateProgress, calculateRawProgress } from '../utils/progressEngine';
 import EmployeeGoalForm from './EmployeeGoalForm';
+import API from '../config/api';
 
 const QUARTER_LABELS = [
   { key: 'Q1', label: 'Q1 Progress' },
@@ -34,7 +35,7 @@ const EmployeeTracking = ({ existingSheet, refreshSheet }) => {
     setIsSaving(true);
     setMessage('');
     try {
-      await axios.put(`http://localhost:5000/api/goals/quarterly/${sheet._id}`, {
+      await axios.put(`${API}/api/goals/quarterly/${sheet._id}`, {
         goalId,
         quarter: activeQuarter,
         actualAchievement,

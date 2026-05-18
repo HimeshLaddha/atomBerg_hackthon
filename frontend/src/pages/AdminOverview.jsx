@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API from '../config/api';
 
 const AdminOverview = () => {
   const [approvedSheets, setApprovedSheets] = useState([]);
@@ -8,7 +9,7 @@ const AdminOverview = () => {
   useEffect(() => {
     const fetchApprovedSheets = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/goals/approved');
+        const res = await axios.get(`${API}/api/goals/approved`);
         // Sort sheets alphabetically by employee name
         const sortedSheets = (res.data || []).sort((a, b) => 
           a.employeeId.name.localeCompare(b.employeeId.name)

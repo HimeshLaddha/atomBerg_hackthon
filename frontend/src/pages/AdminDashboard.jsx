@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import SharedKpiForm from '../components/admin/SharedKpiForm';
 import { exportMasterReport } from '../utils/csvExporter';
-
-const API = 'http://localhost:5000';
+import API from '../config/api';
 
 // ── Small helpers ─────────────────────────────────────────────────────────────
 const TabBtn = ({ id, active, onClick, children }) => (

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { exportAchievementReport } from '../utils/csvExporter';
 import { calculateGoalProgress } from '../utils/progressEngine';
 import SharedKpiForm from '../components/admin/SharedKpiForm';
+import API from '../config/api';
 
 const UOM_TYPES = ['Numeric_Min', 'Percentage_Min', 'Numeric_Max', 'Percentage_Max', 'Zero-based', 'Timeline'];
 const DEPARTMENTS = ['Engineering', 'Sales', 'Marketing', 'Human Resources'];
@@ -35,7 +36,7 @@ const MatrixTab = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/goals/approved')
+    axios.get(`${API}/api/goals/approved`)
       .then(r => setSheets(r.data || []))
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -203,7 +204,7 @@ const AnalyticsTab = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/goals/approved')
+    axios.get(`${API}/api/goals/approved`)
       .then(r => setSheets(r.data || []))
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -337,7 +338,7 @@ const AuditTab = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/goals/audit')
+    axios.get(`${API}/api/goals/audit`)
       .then(r => setLogs(r.data || []))
       .catch(console.error)
       .finally(() => setLoading(false));

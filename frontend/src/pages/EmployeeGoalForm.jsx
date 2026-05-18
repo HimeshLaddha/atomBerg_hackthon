@@ -1,6 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { UserContext } from '../contexts/UserContext';
 import axios from 'axios';
+import API from '../config/api';
 
 const UOM_TYPES = ['Numeric_Min', 'Percentage_Min', 'Numeric_Max', 'Percentage_Max', 'Zero-based', 'Timeline'];
 
@@ -54,7 +55,7 @@ const EmployeeGoalForm = ({ existingSheet, onSuccess }) => {
     setIsSubmitting(true);
     setMessage('');
     try {
-      await axios.post('http://localhost:5000/api/goals/save', {
+      await axios.post(`${API}/api/goals/save`, {
         employeeId: activeUser.userId,
         cycle: '2026-H1',
         goals: goals.map(({ id, _id, ...rest }) => ({ ...rest, goalId: id.toString() }))
@@ -76,7 +77,7 @@ const EmployeeGoalForm = ({ existingSheet, onSuccess }) => {
     setIsSubmitting(true);
     setMessage('');
     try {
-      await axios.post('http://localhost:5000/api/goals/submit', {
+      await axios.post(`${API}/api/goals/submit`, {
         employeeId: activeUser.userId,
         cycle: '2026-H1',
         goals: goals.map(({ id, _id, ...rest }) => ({ ...rest, goalId: id.toString() }))

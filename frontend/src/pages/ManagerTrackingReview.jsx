@@ -3,6 +3,7 @@ import { UserContext } from '../contexts/UserContext';
 import axios from 'axios';
 import { calculateProgress, calculateRawProgress } from '../utils/progressEngine';
 import CheckInCommentForm from '../components/tracking/CheckInCommentForm';
+import API from '../config/api';
 
 const ManagerTrackingReview = ({ sheet, onBack, onActionComplete }) => {
   const { activeUser } = useContext(UserContext);
@@ -13,7 +14,7 @@ const ManagerTrackingReview = ({ sheet, onBack, onActionComplete }) => {
   const handleSaveComment = async (goalId, comment) => {
     setMessage('');
     try {
-      await axios.put(`http://localhost:5000/api/goals/manager-checkin/${sheet._id}`, {
+      await axios.put(`${API}/api/goals/manager-checkin/${sheet._id}`, {
         goalId,
         quarter: activeQuarter,
         managerComment: comment,

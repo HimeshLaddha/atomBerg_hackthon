@@ -3,6 +3,7 @@ import { UserContext } from '../contexts/UserContext';
 import axios from 'axios';
 import EmployeeGoalForm from './EmployeeGoalForm';
 import EmployeeTracking from './EmployeeTracking';
+import API from '../config/api';
 
 const EmployeeDashboard = () => {
   const { activeUser } = useContext(UserContext);
@@ -14,7 +15,7 @@ const EmployeeDashboard = () => {
     setSheetData(null);
     setLoading(true);
     try {
-      const res = await axios.get(`http://localhost:5000/api/goals?userId=${userId}`);
+      const res = await axios.get(`${API}/api/goals?userId=${userId}`);
       // { exists: false } → no sheet → null  
       if (res.data && res.data.exists !== false) {
         setSheetData(res.data);

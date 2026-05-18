@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { UserContext } from '../contexts/UserContext';
 import axios from 'axios';
+import API from '../config/api';
 
 const ManagerReview = ({ sheet, onBack, onActionComplete }) => {
   const { activeUser } = useContext(UserContext);
@@ -23,7 +24,7 @@ const ManagerReview = ({ sheet, onBack, onActionComplete }) => {
     setIsSubmitting(true);
     setMessage('');
     try {
-      await axios.put(`http://localhost:5000/api/goals/review/${sheet._id}`, {
+      await axios.put(`${API}/api/goals/review/${sheet._id}`, {
         action: actionType,
         goals,
         changedBy: activeUser.userId

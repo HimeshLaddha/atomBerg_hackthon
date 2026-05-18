@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
-const API = 'http://localhost:5000';
+import API from '../../config/api';
 
 const UOM_TYPES = [
   'Numeric_Min',

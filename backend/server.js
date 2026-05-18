@@ -11,13 +11,34 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/goal-tracking-portal')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// ── CORS ──────────────────────────────────────────────────────────────────────
+// In production set ALLOWED_ORIGINS=https://your-app.vercel.app in Render env vars.
+// Multiple origins can be comma-separated: https://app.vercel.app,https://custom.com
+// Falls back to open CORS in development (no env var set).
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : null;
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow non-browser tools (Postman, server-to-server) and local dev
+    if (!origin) return callback(null, true);
+    if (!allowedOrigins) return callback(null, true); // open in dev
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
+  credentials: true,
+}));
+
+// Connect to MongoDB Atlas
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('✅ Connected to MongoDB Atlas'))
+  .catch(err => {
+    console.error('❌ MongoDB connection error:', err.message);
+    process.exit(1); // Fail fast — Render will restart the service
+  });
 
 // Middlewares
-app.use(cors());
 app.use(express.json());
 
 // Routes
@@ -25,24 +46,21 @@ app.use('/api/users', userRoutes);
 app.use('/api/goals', goalRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Health check
+// Health check (Render uses this to verify the service is up)
 app.get('/', (req, res) => {
-  res.json({ message: 'GoalSync API is running', version: '2026-H1' });
+  res.json({ message: 'GoalSync API is running', version: '2026-H1', env: process.env.NODE_ENV });
 });
 
 // ── Global error handler ──────────────────────────────────────────────────────
-// Must be defined AFTER all routes. Catches any error thrown with next(err)
-// or any unhandled promise rejection that Express intercepts, and always
-// returns a structured JSON body so the frontend never gets an HTML error page.
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   const status  = err.status || err.statusCode || 500;
   const message = err.message || 'Internal server error';
-  console.error(`[ERROR] ${req.method} ${req.path} →`, message, err.stack ?? '');
-  res.status(status).json({ message, ...(process.env.NODE_ENV !== 'production' && { stack: err.stack }) });
+  console.error(`[ERROR] ${req.method} ${req.path} →`, message);
+  res.status(status).json({ message });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
 
