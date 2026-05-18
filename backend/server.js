@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import userRoutes from './src/routes/userRoutes.js';
 import goalRoutes from './src/routes/goalRoutes.js';
+import adminRoutes from './src/routes/adminRoutes.js';
 
 dotenv.config();
 
@@ -22,12 +23,13 @@ app.use(express.json());
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/goals', goalRoutes);
+app.use('/api/admin', adminRoutes);   // Governance: broadcast-kpi, audit-logs, completion-summary
 
-// Basic Route
+// Health check
 app.get('/', (req, res) => {
-  res.json({ message: 'Goal Setting API is running' });
+  res.json({ message: 'GoalSync API is running', version: '2026-H1' });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

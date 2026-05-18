@@ -1,25 +1,122 @@
 import { calculateGoalProgress } from './progressEngine';
 
 /**
- * Prompt 2.2: Native Client-Side CSV Export Tool
- * Columns: Employee Name, Department, Goal Title, Thrust Area,
- *           Planned Target, Actual Achievement, Computed Progress Score
+ * csvExporter.js — Native client-side CSV generation utility.
+ *
+ * BRD-specified columns for exportMasterReport():
+ *   Employee ID, Employee Name, Department, Thrust Area, Goal Title,
+ *   Target, Quarter, Actual Achievement, Status, Manager Comments
+ *
+ * No server compute is consumed — the CSV blob is constructed entirely in
+ * the browser and delivered via a hidden anchor click.
  */
 
+// ─── Internal helpers ─────────────────────────────────────────────────────────
+
+/** Wraps a value in double-quotes and escapes any internal double-quotes. */
 const escapeCell = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
 
-// Compute best overall actual across Q1–Q4 (pick latest non-empty)
+/** Triggers a browser file download from a plain-text CSV string. */
+const triggerDownload = (csvString, filename) => {
+  const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+// ─── BRD-spec export: one row per (employee, goal, quarter) ──────────────────
+
+/**
+ * exportMasterReport
+ *
+ * Takes an array of populated GoalSheet documents (with employeeId populated)
+ * and emits a CSV with the BRD-mandated column set.
+ *
+ * Row granularity: one row per (goal × quarter) combination.
+ * This gives the full quarterly breakout needed for audit & performance review.
+ *
+ * @param {Array}  sheets   - Populated GoalSheet objects
+ * @param {string} filename - Output filename (default: master_achievement_report.csv)
+ */
+export const exportMasterReport = (sheets, filename = 'master_achievement_report.csv') => {
+  if (!sheets?.length) {
+    alert('No approved data available to export.');
+    return;
+  }
+
+  const HEADERS = [
+    'Employee ID',
+    'Employee Name',
+    'Department',
+    'Thrust Area',
+    'Goal Title',
+    'Target',
+    'Quarter',
+    'Actual Achievement',
+    'Status',
+    'Manager Comments',
+  ];
+
+  const rows = [HEADERS.map(escapeCell).join(',')];
+
+  const QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'];
+
+  sheets.forEach(sheet => {
+    const empId   = sheet.employeeId?.userId   ?? sheet.employeeId?._id ?? '—';
+    const empName = sheet.employeeId?.name      ?? '—';
+    const dept    = sheet.employeeId?.department ?? '—';
+
+    sheet.goals.forEach(goal => {
+      QUARTERS.forEach(quarter => {
+        const qa     = goal.quarterlyAchievements?.[quarter] ?? {};
+        const actual  = qa.actualAchievement ?? '';
+        const status  = qa.status            ?? 'Not Started';
+        const comment = qa.managerComment    ?? '';
+
+        rows.push([
+          escapeCell(empId),
+          escapeCell(empName),
+          escapeCell(dept),
+          escapeCell(goal.thrustArea),
+          escapeCell(goal.title),
+          escapeCell(goal.target),
+          escapeCell(quarter),
+          escapeCell(actual),
+          escapeCell(status),
+          escapeCell(comment),
+        ].join(','));
+      });
+    });
+  });
+
+  triggerDownload(rows.join('\n'), filename);
+};
+
+// ─── Legacy / extended export (kept for backward compat with AdminPanel) ──────
+
+/**
+ * exportAchievementReport
+ *
+ * Original richer export — one row per goal (latest Q across Q4→Q1),
+ * includes UoM, Weightage, computed Progress Score, and per-Q statuses.
+ * Retained so existing AdminPanel "Export Achievement Report" button keeps working.
+ */
 const getLatestActual = (quarterlyAchievements) => {
-  const quarters = ['Q4', 'Q3', 'Q2', 'Q1'];
-  for (const q of quarters) {
-    const actual = quarterlyAchievements?.[q]?.actualAchievement;
-    if (actual && actual.trim() !== '') return actual;
+  for (const q of ['Q4', 'Q3', 'Q2', 'Q1']) {
+    const val = quarterlyAchievements?.[q]?.actualAchievement;
+    if (val && val.trim() !== '') return val;
   }
   return '';
 };
 
 export const exportAchievementReport = (sheets, filename = 'achievement_report.csv') => {
-  if (!sheets || !sheets.length) {
+  if (!sheets?.length) {
     alert('No data to export.');
     return;
   }
@@ -37,14 +134,14 @@ export const exportAchievementReport = (sheets, filename = 'achievement_report.c
     'Q1 Status',
     'Q2 Status',
     'Q3 Status',
-    'Q4 Status'
+    'Q4 Status',
   ];
 
   const rows = [headers.map(escapeCell).join(',')];
 
   sheets.forEach(sheet => {
-    const empName = sheet.employeeId?.name ?? 'Unknown';
-    const dept = sheet.employeeId?.department ?? 'Unknown';
+    const empName = sheet.employeeId?.name       ?? 'Unknown';
+    const dept    = sheet.employeeId?.department ?? 'Unknown';
 
     sheet.goals.forEach(goal => {
       const latestActual = getLatestActual(goal.quarterlyAchievements);
@@ -52,7 +149,7 @@ export const exportAchievementReport = (sheets, filename = 'achievement_report.c
         ? calculateGoalProgress(goal.uomType, goal.target, latestActual)
         : 0;
 
-      const row = [
+      rows.push([
         escapeCell(empName),
         escapeCell(dept),
         escapeCell(goal.title),
@@ -65,24 +162,13 @@ export const exportAchievementReport = (sheets, filename = 'achievement_report.c
         escapeCell(goal.quarterlyAchievements?.Q1?.status ?? ''),
         escapeCell(goal.quarterlyAchievements?.Q2?.status ?? ''),
         escapeCell(goal.quarterlyAchievements?.Q3?.status ?? ''),
-        escapeCell(goal.quarterlyAchievements?.Q4?.status ?? '')
-      ];
-      rows.push(row.join(','));
+        escapeCell(goal.quarterlyAchievements?.Q4?.status ?? ''),
+      ].join(','));
     });
   });
 
-  const csvString = rows.join('\n');
-  const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', filename);
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  triggerDownload(rows.join('\n'), filename);
 };
 
-// Backward compat
+// Alias for any existing imports
 export const exportToCSV = exportAchievementReport;

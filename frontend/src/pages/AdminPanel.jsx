@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { exportAchievementReport } from '../utils/csvExporter';
 import { calculateGoalProgress } from '../utils/progressEngine';
+import SharedKpiForm from '../components/admin/SharedKpiForm';
 
 const UOM_TYPES = ['Numeric_Min', 'Percentage_Min', 'Numeric_Max', 'Percentage_Max', 'Zero-based', 'Timeline'];
 const DEPARTMENTS = ['Engineering', 'Sales', 'Marketing', 'Human Resources'];
@@ -25,79 +26,8 @@ const TabBtn = ({ id, active, onClick, children }) => (
   </button>
 );
 
-// ─── SHARED KPI BROADCASTER ──────────────────────────────────────────────────
-const SharedKPITab = () => {
-  const [form, setForm] = useState({ title: '', thrustArea: '', uomType: 'Numeric_Min', target: '', department: 'Engineering' });
-  const [msg, setMsg] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true); setMsg('');
-    try {
-      const res = await axios.post('http://localhost:5000/api/goals/shared-kpi', form);
-      setMsg({ type: 'success', text: res.data.message });
-      setForm({ title: '', thrustArea: '', uomType: 'Numeric_Min', target: '', department: 'Engineering' });
-    } catch (err) {
-      setMsg({ type: 'error', text: err.response?.data?.message || 'Broadcast failed' });
-    } finally { setLoading(false); }
-  };
-
-  return (
-    <div className="max-w-2xl">
-      <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 flex items-start space-x-3">
-        <span className="text-xl">📡</span>
-        <div>
-          <p className="text-sm font-bold text-blue-800">Broadcast Shared KPI</p>
-          <p className="text-xs text-blue-600 mt-0.5">Injected goals will appear on employees' sheets with Title and Target locked as read-only. Only weightage can be adjusted by the employee.</p>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2">
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Target Department</label>
-            <select value={form.department} onChange={e => setForm({...form, department: e.target.value})}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
-              {DEPARTMENTS.map(d => <option key={d}>{d}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Thrust Area</label>
-            <input required type="text" value={form.thrustArea} onChange={e => setForm({...form, thrustArea: e.target.value})}
-              placeholder="e.g. Quality, Growth" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">KPI Title</label>
-            <input required type="text" value={form.title} onChange={e => setForm({...form, title: e.target.value})}
-              placeholder="e.g. System Uptime" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Unit of Measurement</label>
-            <select value={form.uomType} onChange={e => setForm({...form, uomType: e.target.value})}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
-              {UOM_TYPES.map(t => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Planned Target</label>
-            <input required type="text" value={form.target} onChange={e => setForm({...form, target: e.target.value})}
-              placeholder="e.g. 99.9, 100, 2026-06-30" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" />
-          </div>
-        </div>
-        <button type="submit" disabled={loading}
-          className="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
-          {loading ? 'Broadcasting...' : '📡 Broadcast KPI to Department'}
-        </button>
-        {msg && (
-          <div className={`p-3 rounded-lg text-sm font-medium text-center ${msg.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-            {msg.text}
-          </div>
-        )}
-      </form>
-    </div>
-  );
-};
+// SharedKPITab now delegates to the standalone SharedKpiForm component
+const SharedKPITab = () => <SharedKpiForm />;
 
 // ─── ACHIEVEMENT MATRIX + CSV EXPORT ─────────────────────────────────────────
 const MatrixTab = () => {

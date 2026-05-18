@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 import ManagerDashboard from './pages/ManagerDashboard';
 import AdminPanel from './pages/AdminPanel';
+import AdminDashboard from './pages/AdminDashboard';
 
 // ─── Route guard: bounces unauthenticated visits back to /login ───────────────
 const ProtectedRoute = ({ children }) => {
@@ -50,6 +51,7 @@ function App() {
             <Route path="employee/goals" element={<EmployeeDashboard />} />
             <Route path="manager/dashboard" element={<ManagerDashboard />} />
             <Route path="admin/overview" element={<AdminPanel />} />
+            <Route path="admin/dashboard" element={<AdminDashboard />} />
           </Route>
 
           {/* Catch-all fallback */}

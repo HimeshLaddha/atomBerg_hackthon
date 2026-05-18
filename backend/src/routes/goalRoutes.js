@@ -463,4 +463,45 @@ router.post('/shared-kpi', async (req, res) => {
 });
 
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/goals/checkin — BRD-spec alias for manager check-in comment
+// Body: { sheetId, goalId, quarter, managerComment, changedBy }
+// Delegates to the same logic as PUT /api/goals/manager-checkin/:sheetId
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/checkin', async (req, res) => {
+  const { sheetId, goalId, quarter, managerComment, changedBy } = req.body;
+
+  if (!sheetId) return res.status(400).json({ message: 'sheetId is required in the request body.' });
+
+  try {
+    const sheet = await GoalSheet.findById(sheetId);
+    if (!sheet) return res.status(404).json({ message: 'Sheet not found' });
+
+    const goal = sheet.goals.id(goalId);
+    if (!goal) return res.status(404).json({ message: 'Goal not found' });
+
+    const oldComment = goal.quarterlyAchievements[quarter]?.managerComment ?? '';
+    goal.quarterlyAchievements[quarter].managerComment = managerComment;
+
+    await sheet.save();
+
+    await appendAuditLog({
+      goalSheetId:      sheet._id,
+      changedByUserId:  changedBy,
+      changes: [{
+        field:    `goals["${goal.title}"].${quarter}.managerComment`,
+        oldValue: oldComment,
+        newValue: managerComment,
+      }].filter(c => c.oldValue !== c.newValue),
+    });
+
+    res.status(200).json(sheet);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+
 export default router;
+
