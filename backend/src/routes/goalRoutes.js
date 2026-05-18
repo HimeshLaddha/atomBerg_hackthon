@@ -38,7 +38,7 @@ const validateGoalArray = (goals) => {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PROMPT 1.1 — GET /api/goals?userId=...
+// GET /api/goals?userId=...
 // Returns active GoalSheet OR { exists: false, status: "Draft" }
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/', async (req, res) => {
@@ -62,7 +62,7 @@ router.get('/', async (req, res) => {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PROMPT 1.1 — GET /api/goals/team/subordinates?managerId=...
+// GET /api/goals/team/subordinates?managerId=...
 // Returns all direct reports + their GoalSheet status flags
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/team/subordinates', async (req, res) => {
@@ -208,13 +208,13 @@ router.post('/save', async (req, res) => {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PROMPT 1.1 — POST /api/goals/submit
+// POST /api/goals/submit
 // Validates: max 8 goals, 100% total weightage, each ≥ 10%, then sets Pending_Approval
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/submit', async (req, res) => {
   const { employeeId, cycle, goals } = req.body;
 
-  // 1. Server-side business rule validation
+  // 1. Server-side business rule validation (BRD constraints)
   const validationErrors = validateGoalArray(goals);
   if (validationErrors.length > 0) {
     return res.status(400).json({ message: validationErrors.join(' ') });
@@ -226,13 +226,18 @@ router.post('/submit', async (req, res) => {
 
     let sheet = await GoalSheet.findOne({ employeeId: user._id, cycle });
 
+    // 2. Sanitize goals to ensure quarterlyAchievements are proper objects,
+    //    not the empty-string primitives that a previous draft-save may have written.
+    //    This prevents downstream crashes in the quarterly $set update route.
+    const sanitized = sanitizeGoals(goals);
+
     if (sheet) {
       if (sheet.isLocked) return res.status(403).json({ message: 'Goal sheet is locked and cannot be submitted.' });
-      sheet.goals = goals;
+      sheet.goals = sanitized;
       sheet.status = 'Pending_Approval';
       await sheet.save();
     } else {
-      sheet = await GoalSheet.create({ employeeId: user._id, cycle, status: 'Pending_Approval', goals });
+      sheet = await GoalSheet.create({ employeeId: user._id, cycle, status: 'Pending_Approval', goals: sanitized });
     }
 
     res.status(200).json(sheet);
@@ -243,7 +248,7 @@ router.post('/submit', async (req, res) => {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PROMPT 1.1 — POST /api/goals/approve
+// POST /api/goals/approve
 // Manager approves a sheet: sets status = 'Approved' and isLocked = true
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/approve', async (req, res) => {
@@ -293,7 +298,19 @@ router.put('/review/:sheetId', async (req, res) => {
     const sheet = await GoalSheet.findById(req.params.sheetId);
     if (!sheet) return res.status(404).json({ message: 'Sheet not found' });
 
-    if (goals) sheet.goals = goals;
+    if (goals) {
+      // Server-side BRD constraint check on manager inline edits —
+      // mirrors the same validation enforced by POST /approve.
+      // Prevents a manager bypassing the 100% total / ≥10% per-goal rules
+      // via direct PUT even if the client-side guard is bypassed.
+      if (action === 'approve') {
+        const validationErrors = validateGoalArray(goals);
+        if (validationErrors.length > 0) {
+          return res.status(400).json({ message: validationErrors.join(' ') });
+        }
+      }
+      sheet.goals = sanitizeGoals(goals);
+    }
 
     const oldStatus = sheet.status;
     if (action === 'approve') {
@@ -321,7 +338,7 @@ router.put('/review/:sheetId', async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PUT /api/goals/quarterly/:sheetId — Employee logs quarterly achievements
-// PROMPT 1.4: Captures post-lock mutations in AuditLog
+// Captures post-lock mutations in AuditLog
 // ─────────────────────────────────────────────────────────────────────────────
 router.put('/quarterly/:sheetId', async (req, res) => {
   const { goalId, quarter, actualAchievement, status, changedBy } = req.body;
@@ -387,7 +404,7 @@ router.put('/quarterly/:sheetId', async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PUT /api/goals/manager-checkin/:sheetId — Manager saves check-in comments
-// PROMPT 1.4: Captured in AuditLog as post-lock modification
+// Captured in AuditLog as post-lock modification
 // ─────────────────────────────────────────────────────────────────────────────
 router.put('/manager-checkin/:sheetId', async (req, res) => {
   const { goalId, quarter, managerComment, changedBy } = req.body;
