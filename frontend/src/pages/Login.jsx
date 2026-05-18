@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { UserContext } from '../contexts/UserContext';
 
 // ── Dummy credentials map ─────────────────────────────────────────────────────
+// userIds MUST match the values in backend/src/utils/seed.js exactly.
 const CREDENTIALS = {
-  'john.doe':    { password: 'emp@2026',  userId: 'EMP-2026-881', name: 'John Doe',    role: 'Employee', department: 'Engineering'     },
-  'jane.smith':  { password: 'mgr@2026',  userId: 'MGR-2026-042', name: 'Jane Smith',  role: 'Manager',  department: 'Engineering'     },
-  'alex.rivera': { password: 'adm@2026',  userId: 'ADM-2026-001', name: 'Alex Rivera', role: 'Admin',    department: 'Human Resources' },
+  'john.doe':    { password: 'emp@2026',  userId: 'EMP-003', name: 'John Doe',    role: 'Employee', department: 'Engineering'     },
+  'jane.smith':  { password: 'mgr@2026',  userId: 'EMP-002', name: 'Jane Smith',  role: 'Manager',  department: 'Engineering'     },
+  'alex.rivera': { password: 'adm@2026',  userId: 'EMP-001', name: 'Alex Rivera', role: 'Admin',    department: 'Human Resources' },
 };
+
 
 // ── Persona quick-login cards ─────────────────────────────────────────────────
 const PERSONAS = [
