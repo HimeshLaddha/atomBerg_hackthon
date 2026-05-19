@@ -182,3 +182,27 @@ export const exportAchievementReport = (sheets, filename = 'achievement_report.c
 
 // Alias for any existing imports
 export const exportToCSV = exportAchievementReport;
+
+// ─── AUDIT TRAIL EXPORT (Feature 2) ──────────────────────────────────────────
+
+export const exportAuditTrail = (logs, filename = 'immutable_audit_trail.csv') => {
+  if (!logs?.length) {
+    alert('No audit logs to export.');
+    return;
+  }
+  const headers = ['Timestamp', 'Log ID', 'Action Executed By', 'Field Altered', 'Previous Value', 'Mutated New Value'];
+  const rows = [headers.map(escapeCell).join(',')];
+  logs.forEach(log => {
+    log.changes.forEach(c => {
+      rows.push([
+        escapeCell(new Date(log.timestamp).toLocaleString()),
+        escapeCell(log._id),
+        escapeCell(log.changedBy?.name || 'System'),
+        escapeCell(c.field),
+        escapeCell(c.oldValue),
+        escapeCell(c.newValue),
+      ].join(','));
+    });
+  });
+  triggerDownload(rows.join('\n'), filename);
+};

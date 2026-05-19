@@ -63,32 +63,28 @@ export const MOCK_PROFILES = [
   },
 ];
 
-// ── Cycle offset options ───────────────────────────────────────────────────────
-export const CYCLE_OPTIONS = [
-  { value: 'on_schedule', label: '✅ On Schedule', days: 0 },
-  { value: 'may1_5d',     label: '⚠️  5 Days Past May 1st Goal Window',   days: 5  },
-  { value: 'jul_10d',     label: '🔥 10 Days Past July Q1 Window',        days: 10 },
-];
+// ── Interactive Timeline Configuration ──────────────────────────────────────────
+export const TIMELINE_MAX = 15;
 
 // ── Interval badge renderer ────────────────────────────────────────────────────
 const getIntervalBadge = (days) => {
-  if (days >= 1 && days <= 3) {
+  if (days >= 1 && days <= 5) {
     return {
-      label: '⚠️ Auto-Notification to Employee',
+      label: '⚠️ Yellow Warning Banner: Auto-Notification',
+      classes: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      ring: 'border-l-4 border-yellow-400',
+    };
+  }
+  if (days >= 6 && days <= 10) {
+    return {
+      label: '🔥 Amber Alert: Escalated to L1 Manager',
       classes: 'bg-amber-100 text-amber-800 border-amber-300',
-      ring: 'border-l-4 border-amber-400',
+      ring: 'border-l-4 border-amber-500',
     };
   }
-  if (days >= 4 && days <= 7) {
+  if (days >= 11 && days <= 15) {
     return {
-      label: '🔥 Escalated to L1 Manager',
-      classes: 'bg-orange-100 text-orange-800 border-orange-300',
-      ring: 'border-l-4 border-orange-500',
-    };
-  }
-  if (days >= 8) {
-    return {
-      label: '🚨 Critical Alert Streamed to HR / Skip-Level',
+      label: '🚨 Critical Alert Streamed to HR Command Core',
       classes: 'bg-red-100 text-red-900 border-red-300',
       ring: 'border-l-4 border-red-600',
     };
@@ -97,70 +93,55 @@ const getIntervalBadge = (days) => {
 };
 
 // ── Rule-Based Trigger Engine ──────────────────────────────────────────────────
-const runEscalationRules = (cycleValue, days) => {
-  if (cycleValue === 'on_schedule' || days === 0) return [];
+const runEscalationRules = (days) => {
+  if (days === 0) return [];
 
   const breaches = [];
 
-  MOCK_PROFILES.forEach((profile) => {
-    // Rule 1: 5 Days Past May 1st → flag any employee with Draft status
-    if (cycleValue === 'may1_5d') {
-      if (profile.role === 'Employee' && profile.sheetStatus === 'Draft') {
-        breaches.push({
-          id: `${profile.id}-draft`,
-          person: profile.name,
-          role: profile.role,
-          department: profile.department,
-          manager: profile.manager,
-          ruleTriggered: '5-Day May 1st Goal Submission Window',
-          breachType: 'Goal Sheet Still in Draft',
-          detail: `${profile.name} has not submitted their goal sheet (current status: ${profile.sheetStatus}). May 1st submission deadline has passed by ${days} day(s).`,
-          days,
-          severity: days >= 8 ? 'critical' : days >= 4 ? 'elevated' : 'warning',
-        });
-      }
-    }
+  if (days >= 1 && days <= 5) {
+    breaches.push({
+      id: `emp-doe-${days}`,
+      person: 'John Doe',
+      role: 'Employee',
+      department: 'Engineering',
+      manager: 'Jane Smith',
+      ruleTriggered: 'Milestone Overdue Alert Generated',
+      breachType: 'Warning Level Escalation',
+      detail: 'John Doe (Employee) -> Milestone Overdue Alert Generated.',
+      days,
+      severity: 'warning',
+    });
+  }
 
-    // Rule 2: 10 Days Past July Q1 → flag employees/managers with missing Q1 achievements or comments
-    if (cycleValue === 'jul_10d') {
-      const missingQ1Achievement = profile.goals.some(
-        (g) => !g.quarterlyAchievements?.Q1?.actualAchievement || g.quarterlyAchievements?.Q1?.actualAchievement === ''
-      );
-      const missingQ1Comment = profile.goals.every(
-        (g) => !g.quarterlyAchievements?.Q1?.managerComment || g.quarterlyAchievements?.Q1?.managerComment?.trim() === ''
-      );
+  if (days >= 6 && days <= 10) {
+    breaches.push({
+      id: `mgr-smith-${days}`,
+      person: 'Jane Smith',
+      role: 'L1 Manager',
+      department: 'Engineering',
+      manager: 'Alex Rivera',
+      ruleTriggered: 'Action Required: Pending Direct-Report Approvals Overdue',
+      breachType: 'Elevated Escalation',
+      detail: 'Jane Smith (L1 Manager) -> Action Required: Pending Direct-Report Approvals Overdue.',
+      days,
+      severity: 'elevated',
+    });
+  }
 
-      if (missingQ1Achievement) {
-        breaches.push({
-          id: `${profile.id}-q1-achievement`,
-          person: profile.name,
-          role: profile.role,
-          department: profile.department,
-          manager: profile.manager,
-          ruleTriggered: '10-Day July Q1 Achievement Update Window',
-          breachType: 'Q1 Achievement Update Missing',
-          detail: `${profile.name} has not logged Q1 actual achievements for one or more goals. Q1 update window expired ${days} day(s) ago.`,
-          days,
-          severity: days >= 8 ? 'critical' : days >= 4 ? 'elevated' : 'warning',
-        });
-      }
-
-      if ((profile.role === 'Manager' || profile.role === 'Employee') && missingQ1Comment) {
-        breaches.push({
-          id: `${profile.id}-q1-comment`,
-          person: profile.name,
-          role: profile.role,
-          department: profile.department,
-          manager: profile.manager,
-          ruleTriggered: '10-Day July Q1 Manager Check-in Window',
-          breachType: 'Q1 Manager Comment Log Missing',
-          detail: `No Q1 check-in comment has been logged for ${profile.name}'s goals. Manager comment log overdue by ${days} day(s).`,
-          days,
-          severity: days >= 8 ? 'critical' : days >= 4 ? 'elevated' : 'warning',
-        });
-      }
-    }
-  });
+  if (days >= 11 && days <= 15) {
+    breaches.push({
+      id: `hr-rivera-${days}`,
+      person: 'Alex Rivera',
+      role: 'HR Admin',
+      department: 'Human Resources',
+      manager: 'Command Core',
+      ruleTriggered: 'Breach Escalated to HR Command Core',
+      breachType: 'Critical Escalation',
+      detail: 'Alex Rivera (HR Admin) -> Breach Escalated to HR Command Core.',
+      days,
+      severity: 'critical',
+    });
+  }
 
   return breaches;
 };
@@ -183,11 +164,9 @@ const SeverityBadge = ({ severity }) => {
 
 // ── Main EscalationEngine Component ───────────────────────────────────────────
 const EscalationEngine = () => {
-  const [selectedCycle, setSelectedCycle] = useState('on_schedule');
+  const [days, setDays] = useState(0);
 
-  const cycleOption = CYCLE_OPTIONS.find((o) => o.value === selectedCycle);
-  const days = cycleOption?.days ?? 0;
-  const breaches = useMemo(() => runEscalationRules(selectedCycle, days), [selectedCycle, days]);
+  const breaches = useMemo(() => runEscalationRules(days), [days]);
 
   const intervalBadge = getIntervalBadge(days);
 
@@ -214,24 +193,20 @@ const EscalationEngine = () => {
 
           <div className="min-w-[320px]">
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-              Simulate Target Cycle Date Offset
+              System Timeline Compliance Simulator (Days Past Due)
             </label>
-            <select
-              id="cycle-offset-dropdown"
-              value={selectedCycle}
-              onChange={(e) => setSelectedCycle(e.target.value)}
-              className="w-full px-4 py-3 bg-white/10 text-white border border-white/20 rounded-xl
-                         text-sm font-semibold backdrop-blur-sm focus:ring-2 focus:ring-indigo-400
-                         focus:border-indigo-400 transition-all cursor-pointer
-                         appearance-none hover:bg-white/15"
-              style={{ backgroundImage: 'none' }}
-            >
-              {CYCLE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value} className="text-gray-900 bg-white">
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/10">
+              <input
+                type="range"
+                min="0"
+                max="15"
+                step="1"
+                value={days}
+                onChange={(e) => setDays(Number(e.target.value))}
+                className="w-full h-2 bg-indigo-200/20 rounded-lg appearance-none cursor-pointer accent-indigo-400"
+              />
+              <span className="text-white font-black text-xl min-w-[3ch] text-right">{days}</span>
+            </div>
           </div>
         </div>
 
@@ -253,7 +228,7 @@ const EscalationEngine = () => {
       </div>
 
       {/* ── Summary counters ───────────────────────────────────────────────── */}
-      {selectedCycle !== 'on_schedule' && (
+      {days !== 0 && (
         <div className="grid grid-cols-4 gap-4">
           {[
             { label: 'Total Breaches',   value: breaches.length, color: 'text-indigo-600', bg: 'bg-indigo-50 border-indigo-100' },
@@ -270,10 +245,10 @@ const EscalationEngine = () => {
       )}
 
       {/* ── On-schedule state ─────────────────────────────────────────────── */}
-      {selectedCycle === 'on_schedule' && (
+      {days === 0 && (
         <div className="text-center py-20 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border border-green-100">
           <div className="text-6xl mb-4">✅</div>
-          <h3 className="text-xl font-bold text-green-800">All Systems On Schedule</h3>
+          <h3 className="text-xl font-bold text-green-800">On Schedule - Cycles Open</h3>
           <p className="text-green-600 text-sm mt-2 max-w-md mx-auto">
             No compliance breaches detected. Select a cycle date offset above to simulate escalation scenarios.
           </p>
@@ -281,7 +256,7 @@ const EscalationEngine = () => {
       )}
 
       {/* ── Escalation Log Grid ───────────────────────────────────────────── */}
-      {selectedCycle !== 'on_schedule' && (
+      {days !== 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -294,7 +269,7 @@ const EscalationEngine = () => {
                 )}
               </h2>
               <p className="text-sm text-gray-500 mt-0.5">
-                Rule-triggered compliance flags for cycle: <span className="font-semibold text-indigo-600">{cycleOption?.label}</span>
+                Rule-triggered compliance flags for <span className="font-semibold text-indigo-600">Day {days}</span>
               </p>
             </div>
           </div>

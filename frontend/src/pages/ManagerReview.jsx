@@ -29,6 +29,14 @@ const ManagerReview = ({ sheet, onBack, onActionComplete }) => {
         goals,
         changedBy: activeUser.userId
       });
+      if (actionType === 'approve') {
+        const notif = {
+          employeeId: sheet.employeeId._id || sheet.employeeId,
+          message: `Your ${sheet.cycle || '2026-H1'} Goal Sheet has been officially approved and locked by ${activeUser.name}.`,
+          timestamp: Date.now()
+        };
+        localStorage.setItem('goalSync_notification', JSON.stringify(notif));
+      }
       onActionComplete();
     } catch (error) {
       console.error(error);

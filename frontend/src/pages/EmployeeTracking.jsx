@@ -180,6 +180,24 @@ const EmployeeTracking = ({ existingSheet, refreshSheet }) => {
                           onChange={(e) => handleLocalChange(goal._id, 'actualAchievement', e.target.value)}
                           className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white"
                         />
+                        {/* Target Progress Slider Engine (Feature 4) */}
+                        {['Numeric_Min', 'Percentage_Min', 'Numeric_Max', 'Percentage_Max'].includes(goal.uomType) && !isNaN(Number(goal.target)) && (
+                          <div className="mt-3">
+                            <input 
+                              type="range"
+                              min="0"
+                              max={Number(goal.target) * 1.5 || 100}
+                              step={Number(goal.target) < 100 ? 1 : 10}
+                              value={Number(localAchievements[`${goal._id}-${activeQuarter}`]?.actualAchievement ?? actual) || 0}
+                              onChange={(e) => handleLocalChange(goal._id, 'actualAchievement', e.target.value)}
+                              className="w-full h-2 bg-indigo-100 rounded-lg appearance-none cursor-pointer accent-indigo-600 transition-all"
+                            />
+                            <div className="flex justify-between mt-1 text-[10px] text-gray-400 font-semibold px-1">
+                              <span>0</span>
+                              <span>Target: {goal.target}</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div>

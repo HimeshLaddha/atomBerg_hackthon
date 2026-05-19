@@ -45,9 +45,11 @@ The portal features a professional **split-panel login gateway** with session pe
 | ✅ **Manager Approval** | L1 Managers review, edit inline, and lock approved goal sheets |
 | 📊 **Quarterly Tracking** | Locked sheets get a Q1–Q4 progress log grid with live math engine |
 | 📡 **Shared KPI Broadcast** | HR Admin pushes org-wide KPIs with read-only field enforcement |
-| ⚠ **Escalation Simulation** | Rule-based engine flags delayed submissions and pending approvals |
+| ⚠ **Escalation Simulation** | Interactive 0-15 Day time-travel slider with dynamic real-time alerts |
 | 📈 **Analytics Dashboard** | Goal distribution by Thrust Area and UoM + Manager effectiveness ranking |
-| 📋 **Audit Trail** | Every post-lock mutation is captured in a structured AuditLog collection |
+| 📋 **Audit Trail** | Post-lock mutations captured with a native "Immutable Audit Trail" CSV Export |
+| 🔔 **Notifications** | Real-time cross-persona notification bell triggered by manager actions |
+| 🎚️ **Target Progress Slider**| Interactive range slider mapping to Q1-Q4 achievements in real time |
 | 📥 **CSV Export** | One-click achievement report download with computed progress scores |
 
 ---
@@ -415,6 +417,7 @@ atomBerg_hackthon/
 - **Session persistence**: `localStorage` key `goalsync_session` — survives refresh
 - **Route protection**: `ProtectedRoute` wrapper bounces unauthenticated routes back to `/login`
 - **Smart dashboard dispatch**: `/dashboard` redirects to the correct view by role
+- **Notification Bell (NEW)**: Real-time bell in the navbar that drops a red badge when managers approve goals
 - **Log Out**: purges session from state + localStorage, redirects to `/login`
 
 ### Phase 1 — Goal Drafting (Employee)
@@ -431,14 +434,15 @@ atomBerg_hackthon/
 
 - Four-tab navigation bar: `Q1 Progress`, `Q2 Progress`, `Q3 Progress`, `Q4 Progress`
 - Per-goal card with read-only identity fields (Thrust Area, Title, Target, Weightage)
-- **Actual Achievement** input + **Status Selection** dropdown (Not Started / On Track / Completed)
-- Live **Progress Score** bar updates as user types — powered by `progressEngine.js`
+- **Actual Achievement** input + **Target Progress Slider Engine** (Drag-to-update range slider)
+- **Status Selection** dropdown (Not Started / On Track / Completed)
+- Live **Progress Score** bar updates as user types or drags slider — powered by `progressEngine.js`
 - **Save Progress** surgically updates only the specific quarter field via MongoDB `$set`
 
 ### Manager Approval Workspace
 
 - **Phase 1 Tab**: Lists all `Pending_Approval` sheets. Manager can edit Target and Weightage inline (must maintain 100% total) before approving
-- **Approve & Lock**: Locks the sheet (`isLocked: true`), writes AuditLog entry
+- **Approve & Lock**: Locks the sheet (`isLocked: true`), triggers **real-time cross-persona notification** to the employee, and writes AuditLog entry
 - **Return for Rework**: Resets status to `Draft` for employee revision
 - **Phase 2 Tab**: Lists all approved sheets. Side-by-side Target vs Actual grid with manager comment log per quarter
 
@@ -448,9 +452,9 @@ atomBerg_hackthon/
 |---|---|
 | 📡 Shared KPI | Form to broadcast a KPI to all employees in a department |
 | 📊 Execution Matrix | Organization-wide approval status table + **Export Achievement Report** button |
-| ⚠ Escalation Tracker | Simulate timeline delays (1–15 days) to flag overdue submissions |
+| ⚠ Escalation Tracker | Interactive **Time-Travel Slider (0-15 days)** rendering dynamic red/amber/yellow alerts |
 | 📈 Analytics | Goal distribution by Thrust Area + UoM; Manager Effectiveness Ranking grid |
-| 🔍 Audit Trail | Full chronological log of every post-lock field change |
+| 🔍 Audit Trail | Chronological log of post-lock changes with **Native Immutable Audit Trail CSV Export** |
 
 ---
 
@@ -493,14 +497,15 @@ File: `frontend/src/utils/progressEngine.js`
    └─ Log Out → Login as Jane Smith (MGR-2026-042)
    └─ Approvals Queue tab shows pending sheet
    └─ Reviews goals inline (can adjust Target & Weightage)
-   └─ "Approve & Lock" → status: Approved, isLocked: true
+   └─ "Approve & Lock" → status: Approved, isLocked: true (Triggers Notification)
       OR
    └─ "Return for Rework" → status: Draft (back to employee)
 
 3. Employee (John Doe) — Phase 2 Tracking
    └─ Log back in as John Doe
+   └─ Notification Bell displays a red badge → "Your 2026-H1 Goal Sheet has been officially approved..."
    └─ Sheet exists + isLocked → Phase 2 Tracking Grid
-   └─ Selects Q1 tab → enters Actual Achievement
+   └─ Selects Q1 tab → drags Target Progress Slider or enters Actual Achievement
    └─ Live progress meter shows UoM-calculated score
    └─ "Save Progress" → MongoDB $set surgical update → AuditLog entry
 

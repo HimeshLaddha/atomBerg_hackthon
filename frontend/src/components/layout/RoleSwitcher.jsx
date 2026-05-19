@@ -42,6 +42,10 @@ const RoleSwitcher = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
+  
+  const [notification, setNotification] = useState(null);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const notifRef = useRef(null);
 
   const roles = Object.keys(ROLE_META);
   const currentMeta = ROLE_META[activeRoleName] || ROLE_META['Employee'];
@@ -80,10 +84,51 @@ const RoleSwitcher = () => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setOpen(false);
       }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifDropdown(false);
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  // Notification Polling (Feature 3)
+  useEffect(() => {
+    if (!activeUser || (activeUser.role !== 'Employee' && activeUser.role !== 'Employee (Diana)')) {
+       setNotification(null);
+       return;
+    }
+    const checkNotif = () => {
+      const stored = localStorage.getItem('goalSync_notification');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed.employeeId === activeUser.userId || (activeUser.role === 'Employee (Diana)' && parsed.employeeId === 'EMP-002')) {
+            setNotification(parsed);
+          } else if (parsed.employeeId === activeUser.userId || parsed.employeeId === 'EMP-001') {
+            setNotification(parsed);
+          } else {
+             setNotification(null);
+          }
+        } catch(e) {}
+      } else {
+         setNotification(null);
+      }
+    };
+    checkNotif();
+    window.addEventListener('storage', checkNotif);
+    const interval = setInterval(checkNotif, 1000);
+    return () => {
+      window.removeEventListener('storage', checkNotif);
+      clearInterval(interval);
+    };
+  }, [activeUser]);
+
+  const clearNotification = () => {
+     localStorage.removeItem('goalSync_notification');
+     setNotification(null);
+     setShowNotifDropdown(false);
+  };
 
   // Derive display name: prefer the session persona's name, fall back to activeUser
   const displayName = sessionUser?.name || activeUser?.name || 'User';
@@ -121,6 +166,30 @@ const RoleSwitcher = () => {
           {isAuthenticated ? (
             /* ── SESSION ACTIVE: avatar badge + Log Out ──────────────────── */
             <div className="flex items-center space-x-3">
+              {/* Notification Bell */}
+              {(activeUser?.role === 'Employee' || activeUser?.role === 'Employee (Diana)') && (
+                <div className="relative mr-2" ref={notifRef}>
+                  <button onClick={() => setShowNotifDropdown(!showNotifDropdown)} className="relative p-2 text-gray-400 hover:text-indigo-600 transition-colors">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                    {notification && (
+                      <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-sm">1</span>
+                    )}
+                  </button>
+                  {showNotifDropdown && notification && (
+                    <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden z-50">
+                      <div className="px-4 py-3 bg-indigo-50 border-b border-indigo-100 flex justify-between items-center">
+                        <p className="text-xs font-bold text-indigo-700 uppercase">Alert</p>
+                        <button onClick={clearNotification} className="text-xs text-indigo-500 hover:text-indigo-800 font-semibold transition-colors">Clear</button>
+                      </div>
+                      <div className="p-4 flex items-start gap-3 bg-white">
+                        <span className="text-xl">🔔</span>
+                        <p className="text-sm text-gray-700 leading-relaxed font-medium">{notification.message}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Active user info */}
               <div className="text-right">
                 <p className="text-xs text-gray-400 leading-none mb-0.5">Signed in as</p>

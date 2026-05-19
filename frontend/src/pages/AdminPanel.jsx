@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { exportAchievementReport } from '../utils/csvExporter';
+import { exportAchievementReport, exportAuditTrail } from '../utils/csvExporter';
 import { calculateGoalProgress } from '../utils/progressEngine';
 import SharedKpiForm from '../components/admin/SharedKpiForm';
 import EscalationEngine from '../components/admin/EscalationEngine';
@@ -113,7 +113,13 @@ const AuditTab = () => {
 
   return (
     <div>
-      <h2 className="text-lg font-bold text-gray-800 mb-4">Post-Lock Modification Audit Trail</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-bold text-gray-800">Post-Lock Modification Audit Trail</h2>
+        <button onClick={() => exportAuditTrail(logs)}
+          className="flex items-center space-x-2 px-4 py-2 bg-white text-indigo-600 border-2 border-indigo-200 font-bold text-sm rounded-lg hover:bg-indigo-50 shadow-sm transition-colors">
+          <span>↓</span><span>Export Immutable Audit Trail (CSV)</span>
+        </button>
+      </div>
       <div className="overflow-x-auto border border-gray-200 rounded-xl">
         <table className="min-w-full divide-y divide-gray-200 bg-white text-sm">
           <thead className="bg-gray-50">
