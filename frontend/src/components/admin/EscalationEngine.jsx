@@ -191,7 +191,7 @@ const EscalationEngine = () => {
             </p>
           </div>
 
-          <div className="min-w-[320px]">
+          <div className="w-full lg:min-w-[320px]">
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
               System Timeline Compliance Simulator (Days Past Due)
             </label>

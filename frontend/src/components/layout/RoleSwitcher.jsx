@@ -29,7 +29,7 @@ const ROLE_META = {
   },
 };
 
-const RoleSwitcher = () => {
+const RoleSwitcher = ({ toggleMobileMenu }) => {
   const {
     activeRoleName,
     activeUser,
@@ -140,9 +140,12 @@ const RoleSwitcher = () => {
 
         {/* ── Logo / Brand ─────────────────────────────────────────────────── */}
         <div className="flex items-center space-x-3">
+          <button className="md:hidden p-1 text-gray-500 hover:bg-gray-100 rounded-md" onClick={toggleMobileMenu}>
+             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </button>
           <div
-            className={`w-8 h-8 rounded-lg bg-gradient-to-br ${currentMeta.color}
-              flex items-center justify-center shadow-md transition-all duration-500`}
+            className={`hidden md:flex w-8 h-8 rounded-lg bg-gradient-to-br ${currentMeta.color}
+              items-center justify-center shadow-md transition-all duration-500`}
           >
             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5"
@@ -161,7 +164,7 @@ const RoleSwitcher = () => {
         </div>
 
         {/* ── Right side: session-aware controls ───────────────────────────── */}
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="flex items-center space-x-2 md:space-x-4">
 
           {isAuthenticated ? (
             /* ── SESSION ACTIVE: avatar badge + Log Out ──────────────────── */
@@ -204,20 +207,19 @@ const RoleSwitcher = () => {
                 <span className="text-white text-xs font-bold tracking-wide">{initials}</span>
               </div>
 
-              {/* Log Out button */}
               <button
                 id="logout-btn"
                 onClick={handleLogout}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-red-200
+                className="flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-lg border border-red-200
                   text-sm font-semibold text-red-600 bg-red-50
                   hover:bg-red-100 hover:border-red-300
                   transition-all duration-200 shadow-sm hover:shadow-md"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 md:w-3.5 md:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                     d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                Log Out
+                <span className="hidden md:inline">Log Out</span>
               </button>
             </div>
           ) : (

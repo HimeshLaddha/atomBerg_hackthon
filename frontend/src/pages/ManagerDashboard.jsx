@@ -75,12 +75,12 @@ const ManagerDashboard = () => {
   const approvedCount = approvedSheets.length;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
       {/* Header */}
       <div className="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Team Dashboard</h1>
-          <p className="text-gray-500 mt-1">
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight text-gray-800">Team Dashboard</h1>
+          <p className="text-xs sm:text-sm text-gray-500 leading-relaxed mt-1">
             {subordinates.length} direct report{subordinates.length !== 1 ? 's' : ''} · {activeUser.name}
           </p>
         </div>
@@ -93,10 +93,10 @@ const ManagerDashboard = () => {
       </div>
 
       {/* Phase Tabs */}
-      <div className="flex space-x-2 mb-6">
+      <div className="flex flex-col sm:flex-row gap-2 mb-6">
         <button
           onClick={() => setActiveTab('phase1')}
-          className={`px-5 py-2 text-sm font-semibold rounded-lg transition-all ${
+          className={`w-full sm:w-auto px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium tracking-wide rounded-lg transition-all duration-200 ${
             activeTab === 'phase1' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
@@ -109,7 +109,7 @@ const ManagerDashboard = () => {
         </button>
         <button
           onClick={() => setActiveTab('phase2')}
-          className={`px-5 py-2 text-sm font-semibold rounded-lg transition-all ${
+          className={`w-full sm:w-auto px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium tracking-wide rounded-lg transition-all duration-200 ${
             activeTab === 'phase2' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
@@ -126,7 +126,7 @@ const ManagerDashboard = () => {
       {loading ? (
         <div className="text-center py-12 text-gray-400">Loading team data...</div>
       ) : (
-        <div className="overflow-x-auto border border-gray-200 rounded-xl">
+        <div className="w-full overflow-x-auto rounded-xl border border-slate-900 bg-slate-900/50 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
           <table className="min-w-full divide-y divide-gray-200 text-sm bg-white">
             <thead className="bg-gray-50">
               <tr>
@@ -176,7 +176,7 @@ const ManagerDashboard = () => {
                       {canAction && sheet ? (
                         <button
                           onClick={() => setSelectedSheet(sheet)}
-                          className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+                          className={`w-full sm:w-auto px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium tracking-wide rounded-lg transition-all duration-200 ${
                             activeTab === 'phase1'
                               ? 'bg-indigo-600 text-white hover:bg-indigo-700'
                               : 'bg-green-600 text-white hover:bg-green-700'

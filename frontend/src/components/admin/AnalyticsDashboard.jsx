@@ -135,7 +135,7 @@ const QoQGrid = ({ selectedQ, sheets }) => {
   return (
     <div className="space-y-4">
       {/* Quarter summary */}
-      <div className={`flex items-center justify-between px-5 py-3 rounded-xl border ${qColor.ring} bg-white shadow-sm`}>
+      <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-5 py-3 rounded-xl border ${qColor.ring} bg-white shadow-sm`}>
         <div>
           <span className={`px-3 py-1 rounded-full text-sm font-black border ${qColor.badge} ${qColor.ring}`}>
             {selectedQ} Performance
@@ -364,7 +364,7 @@ const AnalyticsDashboard = () => {
 
       {/* ── QoQ Comparison ───────────────────────────────────────────────── */}
       <div>
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-5">
           <h3 className="text-lg font-extrabold text-gray-800 flex items-center gap-2">
             <span className="w-1 h-6 bg-violet-500 rounded-full" />
             Quarter-on-Quarter Performance Comparison

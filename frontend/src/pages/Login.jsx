@@ -168,11 +168,11 @@ const Login = () => {
       </div>
 
       {/* ── Main card ──────────────────────────────────────────────────────── */}
-      <div className="relative z-10 w-full max-w-5xl flex flex-col lg:flex-row rounded-3xl overflow-hidden shadow-2xl"
+      <div className="relative z-10 w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-8 rounded-3xl overflow-hidden shadow-2xl"
         style={{ boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)' }}>
 
         {/* ── LEFT: Login Form ─────────────────────────────────────────────── */}
-        <div className="lg:w-[42%] bg-[#0f1117] border-r border-white/[0.07] flex flex-col justify-between p-8 lg:p-10">
+        <div className="w-full bg-[#0f1117] border-r border-white/[0.07] flex flex-col justify-between p-6 lg:p-10">
 
           {/* Brand */}
           <div>
@@ -303,7 +303,7 @@ const Login = () => {
         </div>
 
         {/* ── RIGHT: Quick-Login Cards ─────────────────────────────────────── */}
-        <div className="lg:w-[58%] bg-[#0a0b14] flex flex-col justify-center p-8 lg:p-10 gap-4">
+        <div className="w-full bg-[#0a0b14] flex flex-col justify-center p-6 lg:p-10 gap-4">
 
           {/* Header */}
           <div className="mb-2">

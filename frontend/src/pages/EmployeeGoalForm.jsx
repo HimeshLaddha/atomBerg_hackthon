@@ -51,8 +51,8 @@ const GoalCard = React.memo(({ goal, index, totalGoals, onRemove, onChange, UOM_
         )}
       </h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <div className="md:col-span-6">
           <label className="block text-sm font-medium text-gray-700 mb-1">Thrust Area</label>
           {goal.isShared ? (
             <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100 text-gray-600 text-sm cursor-not-allowed">{goal.thrustArea}</div>
@@ -62,7 +62,7 @@ const GoalCard = React.memo(({ goal, index, totalGoals, onRemove, onChange, UOM_
           )}
         </div>
         
-        <div>
+        <div className="md:col-span-6">
           <label className="block text-sm font-medium text-gray-700 mb-1">Goal Title</label>
           {goal.isShared ? (
             <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100 text-gray-600 text-sm cursor-not-allowed">{goal.title}</div>
@@ -72,7 +72,7 @@ const GoalCard = React.memo(({ goal, index, totalGoals, onRemove, onChange, UOM_
           )}
         </div>
 
-        <div className="md:col-span-2">
+        <div className="md:col-span-12">
           <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
           {goal.isShared ? (
             <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100 text-gray-600 text-sm cursor-not-allowed min-h-[64px]">{goal.description || '—'}</div>
@@ -87,7 +87,7 @@ const GoalCard = React.memo(({ goal, index, totalGoals, onRemove, onChange, UOM_
           )}
         </div>
 
-        <div>
+        <div className="md:col-span-6">
           <label className="block text-sm font-medium text-gray-700 mb-1">Unit of Measurement</label>
           {goal.isShared ? (
             <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100 text-gray-600 text-sm cursor-not-allowed">{goal.uomType.replace('_', ' ')}</div>
@@ -99,7 +99,7 @@ const GoalCard = React.memo(({ goal, index, totalGoals, onRemove, onChange, UOM_
           )}
         </div>
 
-        <div>
+        <div className="md:col-span-6">
           <label className="block text-sm font-medium text-gray-700 mb-1">Target</label>
           {goal.isShared ? (
             <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100 text-gray-600 text-sm cursor-not-allowed">{goal.target}</div>
@@ -116,7 +116,7 @@ const GoalCard = React.memo(({ goal, index, totalGoals, onRemove, onChange, UOM_
           )}
         </div>
 
-        <div className="md:col-span-2 border-t border-gray-200 mt-2 pt-4">
+        <div className="md:col-span-12 border-t border-gray-200 mt-2 pt-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">Weightage (%)</label>
           <input 
             type="number" 
@@ -216,7 +216,7 @@ const EmployeeGoalForm = ({ existingSheet, onSuccess }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
       <div className="mb-8 border-b border-gray-100 pb-4">
         <h1 className="text-2xl font-bold text-gray-800">Draft Goal Sheet</h1>
         <p className="text-gray-500 mt-1">Define your objectives for the 2026-H1 cycle.</p>
@@ -254,29 +254,29 @@ const EmployeeGoalForm = ({ existingSheet, onSuccess }) => {
           />
         ))}
 
-        <div className="flex justify-between items-center pt-4">
+        <div className="flex flex-col md:flex-row justify-between items-center pt-4 gap-4">
           <button 
             type="button" 
             onClick={handleAddGoal} 
             disabled={goals.length >= 8}
-            className={`px-4 py-2 text-sm font-medium rounded-md ${goals.length >= 8 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-50'}`}
+            className={`w-full md:w-auto px-4 py-2 text-sm font-medium rounded-md ${goals.length >= 8 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-50'}`}
           >
             + Add Another Goal {goals.length >= 8 && '(Max 8 Reached)'}
           </button>
 
-          <div className="flex space-x-3">
+          <div className="flex flex-col md:flex-row w-full md:w-auto space-y-3 md:space-y-0 md:space-x-3">
             <button 
               type="button" 
               onClick={handleSave}
               disabled={isSubmitting}
-              className="px-6 py-2 text-sm font-semibold rounded-md shadow-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="w-full md:w-auto px-4 py-2 text-sm font-medium rounded-md shadow-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               Save Draft
             </button>
             <button 
               type="submit" 
               disabled={!isFormValid || isSubmitting}
-              className={`px-6 py-2 text-sm font-semibold rounded-md shadow-sm text-white ${!isFormValid || isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+              className={`w-full md:w-auto px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white ${!isFormValid || isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
             >
               {isSubmitting ? 'Submitting...' : 'Submit for Approval'}
             </button>

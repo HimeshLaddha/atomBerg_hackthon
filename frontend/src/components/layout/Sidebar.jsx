@@ -66,7 +66,7 @@ const NAV_CONFIG = {
   }
 };
 
-const Sidebar = () => {
+const Sidebar = ({ mobileMenuOpen, closeMobileMenu }) => {
   const { activeUser } = useContext(UserContext);
   const location = useLocation();
   // Use sessionUser.role directly — matches NAV_CONFIG keys ('Employee','Manager','Admin')
@@ -74,7 +74,8 @@ const Sidebar = () => {
   const config = NAV_CONFIG[role] || NAV_CONFIG['Employee'];
 
   return (
-    <div className="w-64 bg-white border-r border-gray-100 h-[calc(100vh-64px)] fixed left-0 flex flex-col shadow-sm">
+    <div className={`fixed inset-y-0 left-0 top-16 z-40 w-64 bg-white border-r border-gray-100 h-[calc(100vh-64px)] flex flex-col shadow-sm transition-transform duration-300 md:translate-x-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+
 
       {/* User Identity Card */}
       <div className={`m-4 p-4 rounded-xl bg-gradient-to-br ${config.gradient} text-white shadow-md`}>

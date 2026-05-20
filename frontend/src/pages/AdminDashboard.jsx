@@ -113,8 +113,8 @@ const CompletionTrackerTab = () => {
       {/* Per-employee tracker grid */}
       <div>
         <h2 className="text-base font-bold text-gray-800 mb-3">Employee Progress Tracker</h2>
-        <div className="overflow-x-auto border border-gray-200 rounded-xl shadow-sm">
-          <table className="min-w-full divide-y divide-gray-200 bg-white text-sm">
+        <div className="w-full overflow-x-auto rounded-xl border border-slate-900 bg-slate-900/50 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+          <table className="min-w-full divide-y divide-slate-800 bg-white text-sm">
             <thead className="bg-gray-50">
               <tr>
                 {['Employee', 'Dept', 'Goals', 'Sheet Status', 'Q1', 'Q2', 'Q3', 'Q4', 'Check-in', 'Overall'].map(h => (
@@ -219,7 +219,7 @@ const AuditTrailTab = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-bold text-gray-800">Post-Lock Audit Trail Explorer</h2>
           <p className="text-xs text-gray-500 mt-0.5">
@@ -231,12 +231,12 @@ const AuditTrailTab = () => {
           value={filter}
           onChange={e => setFilter(e.target.value)}
           placeholder="Filter by person or field…"
-          className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 w-56"
+          className="w-full sm:w-auto px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
         />
       </div>
 
-      <div className="overflow-x-auto border border-gray-200 rounded-xl shadow-sm">
-        <table className="min-w-full divide-y divide-gray-200 bg-white text-sm">
+      <div className="w-full overflow-x-auto rounded-xl border border-slate-900 bg-slate-900/50 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+        <table className="min-w-full divide-y divide-slate-800 bg-white text-sm">
           <thead className="bg-gray-50">
             <tr>
               {['Timestamp', 'Changed By', 'Role', 'Field Altered', 'Old Value', 'New Value'].map(h => (
@@ -330,7 +330,7 @@ const ReportExporterTab = () => {
   return (
     <div className="space-y-6">
       {/* Export header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-bold text-gray-800">Master Achievement Report</h2>
           <p className="text-xs text-gray-500 mt-0.5">
@@ -340,8 +340,8 @@ const ReportExporterTab = () => {
         <button
           onClick={handleExport}
           disabled={exporting || !sheets.length}
-          className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white font-bold text-sm rounded-lg
-            hover:bg-green-700 disabled:opacity-50 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-green-600 text-white font-medium tracking-wide text-xs sm:text-sm rounded-lg
+            hover:bg-green-700 disabled:opacity-50 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
         >
           {exporting ? (
             <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -380,8 +380,8 @@ const ReportExporterTab = () => {
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
             Data Preview — First {Math.min(previewRows.length, 10)} rows
           </p>
-          <div className="overflow-x-auto border border-gray-200 rounded-xl shadow-sm">
-            <table className="min-w-full divide-y divide-gray-200 bg-white text-xs">
+          <div className="w-full overflow-x-auto rounded-xl border border-slate-900 bg-slate-900/50 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+            <table className="min-w-full divide-y divide-slate-800 bg-white text-xs">
               <thead className="bg-gray-50">
                 <tr>
                   {['Emp ID', 'Name', 'Dept', 'Thrust Area', 'Goal Title', 'Target', 'Q', 'Actual', 'Status', 'Comment'].map(h => (
@@ -441,7 +441,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('tracker');
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
       {/* Header */}
       <div className="mb-6 border-b border-gray-100 pb-4">
         <div className="flex items-center gap-3">
@@ -452,8 +452,8 @@ const AdminDashboard = () => {
             </svg>
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Admin Governance Dashboard</h1>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight text-gray-800">Admin Governance Dashboard</h1>
+            <p className="text-xs sm:text-sm text-gray-500 leading-relaxed mt-0.5">
               Completion tracking, audit explorer, CSV reporting, and KPI injection.
             </p>
           </div>

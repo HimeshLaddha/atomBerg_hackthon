@@ -31,14 +31,14 @@ const ManagerTrackingReview = ({ sheet, onBack, onActionComplete }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
       <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
         <div>
           <button onClick={onBack} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium mb-2 flex items-center">
             ← Back to Dashboard
           </button>
-          <h1 className="text-2xl font-bold text-gray-800">Quarterly Check-In: {sheet.employeeId.name}</h1>
-          <p className="text-gray-500 mt-1">Reviewing execution progress for Cycle {sheet.cycle}</p>
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight text-gray-800">Quarterly Check-In: {sheet.employeeId.name}</h1>
+          <p className="text-xs sm:text-sm text-gray-500 leading-relaxed mt-1">Reviewing execution progress for Cycle {sheet.cycle}</p>
         </div>
       </div>
 
@@ -49,7 +49,7 @@ const ManagerTrackingReview = ({ sheet, onBack, onActionComplete }) => {
       )}
 
       {/* Quarter Tab Selection */}
-      <div className="flex space-x-2 mb-8 bg-gray-50 p-2 rounded-lg border border-gray-200 w-fit">
+      <div className="flex overflow-x-auto whitespace-nowrap scrollbar-none space-x-2 mb-8 bg-gray-50 p-2 rounded-lg border border-gray-200 w-full md:w-fit">
         {quarters.map((q) => (
           <button
             key={q}
@@ -77,17 +77,17 @@ const ManagerTrackingReview = ({ sheet, onBack, onActionComplete }) => {
           const progressScore = calculateProgress(goal.uomType, goal.target, actual);
 
           return (
-            <div key={goal._id} className="p-6 border border-gray-200 rounded-xl bg-gray-50">
-              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+            <div key={goal._id} className="p-3 sm:p-5 mb-3 sm:mb-4 border border-gray-200 rounded-xl bg-gray-50">
+              <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-4 flex items-center">
                 <span className="bg-indigo-100 text-indigo-800 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shadow-sm mr-3">{index + 1}</span>
                 {goal.title}
               </h3>
 
               {/* Side-by-Side Comparison */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-col lg:flex-row gap-6">
                 
                 {/* Planned Target */}
-                <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
+                <div className="flex-1 bg-white p-4 sm:p-5 rounded-lg border border-gray-200 shadow-sm">
                   <h4 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-100 uppercase tracking-wider">Planned Target</h4>
                   <div className="space-y-3">
                     <div>
@@ -110,7 +110,7 @@ const ManagerTrackingReview = ({ sheet, onBack, onActionComplete }) => {
                 </div>
 
                 {/* Actual Achievement */}
-                <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm flex flex-col justify-between">
+                <div className="flex-1 bg-white p-4 sm:p-5 rounded-lg border border-gray-200 shadow-sm flex flex-col justify-between">
                   <div>
                     <h4 className="text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-100 uppercase tracking-wider flex justify-between">
                       Employee Actuals
@@ -125,7 +125,7 @@ const ManagerTrackingReview = ({ sheet, onBack, onActionComplete }) => {
                     </div>
 
                     <div className="mt-4 pt-4 border-t border-gray-100">
-                      <div className="flex justify-between items-center mb-1.5">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1.5 gap-2">
                         <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Computed Score</span>
                         <div className="flex items-center gap-1.5">
                           {rawScore > 100 && (
