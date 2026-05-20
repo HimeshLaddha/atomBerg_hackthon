@@ -113,8 +113,8 @@ const CompletionTrackerTab = () => {
       {/* Per-employee tracker grid */}
       <div>
         <h2 className="text-base font-bold text-gray-800 mb-3">Employee Progress Tracker</h2>
-        <div className="w-full overflow-x-auto rounded-xl border border-slate-900 bg-slate-900/50 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
-          <table className="min-w-full divide-y divide-slate-800 bg-white text-sm">
+        <div className="w-full overflow-x-auto rounded-xl border border-gray-200 bg-gray-50 p-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+          <table className="min-w-full divide-y divide-gray-100 bg-white text-sm">
             <thead className="bg-gray-50">
               <tr>
                 {['Employee', 'Dept', 'Goals', 'Sheet Status', 'Q1', 'Q2', 'Q3', 'Q4', 'Check-in', 'Overall'].map(h => (
@@ -380,7 +380,7 @@ const ReportExporterTab = () => {
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
             Data Preview — First {Math.min(previewRows.length, 10)} rows
           </p>
-          <div className="w-full overflow-x-auto rounded-xl border border-slate-900 bg-slate-900/50 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+          <div className="w-full overflow-x-auto rounded-xl border border-gray-200 bg-gray-50 p-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
             <table className="min-w-full divide-y divide-slate-800 bg-white text-xs">
               <thead className="bg-gray-50">
                 <tr>

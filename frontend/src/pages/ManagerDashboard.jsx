@@ -126,7 +126,7 @@ const ManagerDashboard = () => {
       {loading ? (
         <div className="text-center py-12 text-gray-400">Loading team data...</div>
       ) : (
-        <div className="w-full overflow-x-auto rounded-xl border border-slate-900 bg-slate-900/50 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+        <div className="w-full overflow-x-auto rounded-xl border border-gray-200 bg-gray-50 p-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
           <table className="min-w-full divide-y divide-gray-200 text-sm bg-white">
             <thead className="bg-gray-50">
               <tr>

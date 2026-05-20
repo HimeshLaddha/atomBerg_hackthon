@@ -7,7 +7,7 @@ const Layout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen w-full flex flex-col bg-slate-950 text-slate-100 font-sans overflow-x-hidden">
+    <div className="min-h-screen w-full flex flex-col bg-gray-50 text-gray-900 font-sans overflow-x-hidden">
       {/* Global Top Navigation Bar */}
       <RoleSwitcher toggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)} />
       
@@ -24,7 +24,7 @@ const Layout = () => {
         )}
         
         {/* Main Workspace */}
-        <main className="flex-1 md:ml-64 p-4 sm:p-6 lg:p-8 overflow-y-auto h-[calc(100vh-64px)] bg-slate-950 w-full max-w-full">
+        <main className="flex-1 md:ml-64 p-4 sm:p-6 lg:p-8 overflow-y-auto h-[calc(100vh-64px)] bg-gray-50 w-full max-w-full">
           <div className="w-full max-w-full mx-auto">
             <Outlet />
           </div>
