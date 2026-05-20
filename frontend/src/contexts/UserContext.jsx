@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 export const UserContext = createContext();
 
@@ -49,21 +49,21 @@ export const UserProvider = ({ children }) => {
   //    now happens via Login.jsx logout → re-login flow.
   const switchRole = useCallback(() => {}, []);
 
+  const contextValue = useMemo(() => ({
+    // Session API
+    sessionUser,
+    isAuthenticated: !!sessionUser,
+    login,
+    logout,
+    // activeUser is always the real logged-in user — never a mock fallback
+    activeUser,
+    // Legacy shims (kept for backward compat — safe to remove later)
+    activeRoleName: sessionUser?.role ?? 'Employee',
+    switchRole,
+  }), [sessionUser, login, logout, activeUser, switchRole]);
+
   return (
-    <UserContext.Provider
-      value={{
-        // Session API
-        sessionUser,
-        isAuthenticated: !!sessionUser,
-        login,
-        logout,
-        // activeUser is always the real logged-in user — never a mock fallback
-        activeUser,
-        // Legacy shims (kept for backward compat — safe to remove later)
-        activeRoleName: sessionUser?.role ?? 'Employee',
-        switchRole,
-      }}
-    >
+    <UserContext.Provider value={contextValue}>
       {children}
     </UserContext.Provider>
   );

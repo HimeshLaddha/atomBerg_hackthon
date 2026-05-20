@@ -42,7 +42,7 @@ router.post('/broadcast-kpi', async (req, res) => {
   if (employeeIds && Array.isArray(employeeIds) && employeeIds.length > 0) {
     // Targeted mode: look up each userId
     const idList = employeeIds.map(id => id.trim()).filter(Boolean);
-    users = await User.find({ userId: { $in: idList }, role: { $ne: 'Admin' } });
+    users = await User.find({ userId: { $in: idList }, role: { $ne: 'Admin' } }).select('_id userId name').lean();
 
     // Report any IDs that were not found
     const foundIds = users.map(u => u.userId);
@@ -54,7 +54,7 @@ router.post('/broadcast-kpi', async (req, res) => {
     }
   } else if (department?.trim()) {
     // Department broadcast mode
-    users = await User.find({ department: department.trim(), role: { $ne: 'Admin' } });
+    users = await User.find({ department: department.trim(), role: { $ne: 'Admin' } }).select('_id userId name').lean();
   } else {
     return res.status(400).json({
       message: 'Provide either an array of employeeIds or a department name.',
@@ -151,9 +151,11 @@ router.post('/broadcast-kpi', async (req, res) => {
 router.get('/audit-logs', async (req, res) => {
   try {
     const logs = await AuditLog.find()
+      .select('-__v')
       .populate('changedBy', 'name role userId')
       .populate({ path: 'goalSheetId', select: 'cycle', populate: { path: 'employeeId', select: 'name userId' } })
-      .sort({ timestamp: -1 });
+      .sort({ timestamp: -1 })
+      .lean();
 
     res.status(200).json(logs);
   } catch (error) {
@@ -174,7 +176,9 @@ router.get('/audit-logs', async (req, res) => {
 router.get('/completion-summary', async (req, res) => {
   try {
     const sheets = await GoalSheet.find({ cycle: ACTIVE_CYCLE })
-      .populate('employeeId', 'name userId department role');
+      .select('employeeId status isLocked goals')
+      .populate('employeeId', 'name userId department role')
+      .lean();
 
     const QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'];
 

@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { UserContext } from '../contexts/UserContext';
 import axios from 'axios';
 import { calculateProgress, calculateRawProgress } from '../utils/progressEngine';
@@ -12,6 +12,157 @@ const QUARTER_LABELS = [
   { key: 'Q4', label: 'Q4 Progress' },
 ];
 
+const TrackingInputCard = React.memo(({ goal, index, activeQuarter, localAchievement, onLocalChange, onSave, isSaving }) => {
+  const [actualAchievement, setActualAchievement] = useState(localAchievement?.actualAchievement ?? (goal.quarterlyAchievements[activeQuarter]?.actualAchievement || ''));
+  const [status, setStatus] = useState(localAchievement?.status ?? (goal.quarterlyAchievements[activeQuarter]?.status || 'Not Started'));
+
+  useEffect(() => {
+    setActualAchievement(localAchievement?.actualAchievement ?? (goal.quarterlyAchievements[activeQuarter]?.actualAchievement || ''));
+    setStatus(localAchievement?.status ?? (goal.quarterlyAchievements[activeQuarter]?.status || 'Not Started'));
+  }, [localAchievement, goal.quarterlyAchievements, activeQuarter]);
+
+  const handleBlur = (field, value) => {
+    onLocalChange(goal._id, field, value);
+  };
+
+  const liveActual = actualAchievement;
+  const rawScore = calculateRawProgress(goal.uomType, goal.target, liveActual);
+  const progressScore = calculateProgress(goal.uomType, goal.target, liveActual);
+
+  return (
+    <div className="p-6 border border-gray-200 rounded-xl bg-gray-50 hover:border-indigo-200 transition-colors">
+      <div className="flex flex-col lg:flex-row gap-6">
+        
+        {/* Read-only Goal Info */}
+        <div className="flex-1 space-y-4">
+          <div className="flex items-center space-x-3">
+            <span className="bg-indigo-100 text-indigo-800 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shadow-sm">{index + 1}</span>
+            <h3 className="text-lg font-bold text-gray-800">{goal.title}</h3>
+            {goal.isShared && (
+              <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-bold rounded flex items-center">
+                ★ Shared KPI
+              </span>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4 bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Thrust Area</p>
+              <p className="text-sm font-medium text-gray-800">{goal.thrustArea}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Target ({goal.uomType.replace('_', ' ')})</p>
+              <p className="text-sm font-bold text-indigo-600">{goal.target}</p>
+            </div>
+            <div className="col-span-2 pt-2 border-t border-gray-50">
+              <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Weightage</p>
+              <p className="text-sm font-medium text-gray-800">{goal.weightage}%</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Interactive Tracking Input */}
+        <div className="lg:w-1/3 bg-white p-5 rounded-lg border border-indigo-100 shadow-sm flex flex-col justify-between">
+          <div>
+            <h4 className="text-sm font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100">Log {activeQuarter} Results</h4>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Actual Achievement</label>
+                <input 
+                  type="text" 
+                  value={actualAchievement}
+                  placeholder={`Enter your ${activeQuarter} actuals...`}
+                  onChange={(e) => setActualAchievement(e.target.value)}
+                  onBlur={(e) => handleBlur('actualAchievement', e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white"
+                />
+                {/* Target Progress Slider Engine (Feature 4) */}
+                {['Numeric_Min', 'Percentage_Min', 'Numeric_Max', 'Percentage_Max'].includes(goal.uomType) && !isNaN(Number(goal.target)) && (
+                  <div className="mt-3">
+                    <input 
+                      type="range"
+                      min="0"
+                      max={Number(goal.target) * 1.5 || 100}
+                      step={Number(goal.target) < 100 ? 1 : 10}
+                      value={Number(actualAchievement) || 0}
+                      onChange={(e) => setActualAchievement(e.target.value)}
+                      onBlur={(e) => handleBlur('actualAchievement', e.target.value)}
+                      className="w-full h-2 bg-indigo-100 rounded-lg appearance-none cursor-pointer accent-indigo-600 transition-all"
+                    />
+                    <div className="flex justify-between mt-1 text-[10px] text-gray-400 font-semibold px-1">
+                      <span>0</span>
+                      <span>Target: {goal.target}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Status Selection</label>
+                <select 
+                  value={status}
+                  onChange={(e) => { setStatus(e.target.value); handleBlur('status', e.target.value); }}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 focus:bg-white cursor-pointer"
+                >
+                  <option value="Not Started">Not Started</option>
+                  <option value="On Track">On Track</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+
+              <button
+                onClick={() => onSave(goal._id, actualAchievement, status)}
+                disabled={isSaving}
+                className="w-full mt-2 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              >
+                {isSaving ? 'Saving...' : 'Save Progress'}
+              </button>
+            </div>
+          </div>
+
+          {/* Live Tracker Metric */}
+          <div className="mt-6 pt-4 border-t border-gray-100">
+            <div className="flex justify-between items-center mb-1.5">
+              <div>
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Progress Score</span>
+                <span className="ml-2 text-[10px] text-gray-400 font-mono">
+                  ({goal.uomType === 'Numeric_Min' || goal.uomType === 'Percentage_Min' ? 'actual÷target' :
+                    goal.uomType === 'Numeric_Max' || goal.uomType === 'Percentage_Max' ? 'target÷actual' :
+                    goal.uomType === 'Zero-based' ? '0=100%' : 'date'})
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {rawScore > 100 && (
+                  <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-green-100 text-green-700 border border-green-200">
+                    ★ Overachieved
+                  </span>
+                )}
+                <span className={`text-lg font-black ${
+                  rawScore >= 100 ? 'text-green-500' : rawScore > 0 ? 'text-indigo-600' : 'text-gray-400'
+                }`}>
+                  {rawScore}%
+                </span>
+              </div>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden shadow-inner">
+              <div
+                className={`h-2.5 rounded-full transition-all duration-500 ease-out ${
+                  progressScore === 100
+                    ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]'
+                    : progressScore > 0 ? 'bg-indigo-500' : 'bg-gray-300'
+                }`}
+                style={{ width: `${progressScore}%` }}
+              />
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+});
+
 const EmployeeTracking = ({ existingSheet, refreshSheet }) => {
   const { activeUser } = useContext(UserContext);
   const [activeQuarter, setActiveQuarter] = useState('Q1');
@@ -21,7 +172,7 @@ const EmployeeTracking = ({ existingSheet, refreshSheet }) => {
 
   const sheet = existingSheet;
 
-  const handleLocalChange = (goalId, field, value) => {
+  const handleLocalChange = React.useCallback((goalId, field, value) => {
     setLocalAchievements(prev => ({
       ...prev,
       [`${goalId}-${activeQuarter}`]: {
@@ -29,9 +180,9 @@ const EmployeeTracking = ({ existingSheet, refreshSheet }) => {
         [field]: value
       }
     }));
-  };
+  }, [activeQuarter]);
 
-  const handleSaveAchievement = async (goalId, actualAchievement, status) => {
+  const handleSaveAchievement = React.useCallback(async (goalId, actualAchievement, status) => {
     setIsSaving(true);
     setMessage('');
     try {
@@ -50,12 +201,10 @@ const EmployeeTracking = ({ existingSheet, refreshSheet }) => {
       setIsSaving(false);
       setTimeout(() => setMessage(''), 3000);
     }
-  };
+  }, [sheet?._id, activeQuarter, activeUser?.userId, refreshSheet]);
 
-  // If no sheet at all — guard (EmployeeDashboard handles this case, but defensive check)
   if (!sheet) return null;
 
-  // Draft state: show the editable form for the existing draft
   if (sheet.status === 'Draft') {
     return (
       <div>
@@ -71,7 +220,6 @@ const EmployeeTracking = ({ existingSheet, refreshSheet }) => {
     );
   }
 
-  // Pending approval state: locked out, show status banner
   if (sheet.status === 'Pending_Approval') {
     return (
       <div className="bg-yellow-50 p-8 rounded-xl border border-yellow-200 text-center">
@@ -103,7 +251,6 @@ const EmployeeTracking = ({ existingSheet, refreshSheet }) => {
         </div>
       )}
 
-      {/* Quarter Tab Navbar */}
       <div className="flex space-x-1 mb-8 bg-gray-100 p-1.5 rounded-xl border border-gray-200">
         {QUARTER_LABELS.map(({ key, label }) => (
           <button
@@ -121,154 +268,18 @@ const EmployeeTracking = ({ existingSheet, refreshSheet }) => {
       </div>
 
       <div className="space-y-6">
-        {sheet.goals.map((goal, index) => {
-          const currentQuarterData = goal.quarterlyAchievements[activeQuarter] || {};
-          const actual = currentQuarterData.actualAchievement || '';
-          const status = currentQuarterData.status || 'Not Started';
-          
-          // Live local value takes priority so meter reacts instantly as user types
-          const liveActual = localAchievements[`${goal._id}-${activeQuarter}`]?.actualAchievement ?? actual;
-          // rawScore can exceed 100 (overachievement) — used for the display badge
-          const rawScore     = calculateRawProgress(goal.uomType, goal.target, liveActual);
-          // clampedScore is always [0,100] — used for the progress bar CSS width
-          const progressScore = calculateProgress(goal.uomType, goal.target, liveActual);
-
-          return (
-            <div key={goal._id} className="p-6 border border-gray-200 rounded-xl bg-gray-50 hover:border-indigo-200 transition-colors">
-              <div className="flex flex-col lg:flex-row gap-6">
-                
-                {/* Read-only Goal Info */}
-                <div className="flex-1 space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="bg-indigo-100 text-indigo-800 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shadow-sm">{index + 1}</span>
-                    <h3 className="text-lg font-bold text-gray-800">{goal.title}</h3>
-                    {goal.isShared && (
-                      <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-bold rounded flex items-center">
-                        ★ Shared KPI
-                      </span>
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Thrust Area</p>
-                      <p className="text-sm font-medium text-gray-800">{goal.thrustArea}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Target ({goal.uomType.replace('_', ' ')})</p>
-                      <p className="text-sm font-bold text-indigo-600">{goal.target}</p>
-                    </div>
-                    <div className="col-span-2 pt-2 border-t border-gray-50">
-                      <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Weightage</p>
-                      <p className="text-sm font-medium text-gray-800">{goal.weightage}%</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Interactive Tracking Input */}
-                <div className="lg:w-1/3 bg-white p-5 rounded-lg border border-indigo-100 shadow-sm flex flex-col justify-between">
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100">Log {QUARTER_LABELS.find(q => q.key === activeQuarter)?.label} Results</h4>
-                    
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1">Actual Achievement</label>
-                        <input 
-                          type="text" 
-                          value={localAchievements[`${goal._id}-${activeQuarter}`]?.actualAchievement ?? actual}
-                          placeholder={`Enter your ${activeQuarter} actuals...`}
-                          onChange={(e) => handleLocalChange(goal._id, 'actualAchievement', e.target.value)}
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white"
-                        />
-                        {/* Target Progress Slider Engine (Feature 4) */}
-                        {['Numeric_Min', 'Percentage_Min', 'Numeric_Max', 'Percentage_Max'].includes(goal.uomType) && !isNaN(Number(goal.target)) && (
-                          <div className="mt-3">
-                            <input 
-                              type="range"
-                              min="0"
-                              max={Number(goal.target) * 1.5 || 100}
-                              step={Number(goal.target) < 100 ? 1 : 10}
-                              value={Number(localAchievements[`${goal._id}-${activeQuarter}`]?.actualAchievement ?? actual) || 0}
-                              onChange={(e) => handleLocalChange(goal._id, 'actualAchievement', e.target.value)}
-                              className="w-full h-2 bg-indigo-100 rounded-lg appearance-none cursor-pointer accent-indigo-600 transition-all"
-                            />
-                            <div className="flex justify-between mt-1 text-[10px] text-gray-400 font-semibold px-1">
-                              <span>0</span>
-                              <span>Target: {goal.target}</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1">Status Selection</label>
-                        <select 
-                          value={localAchievements[`${goal._id}-${activeQuarter}`]?.status ?? status}
-                          onChange={(e) => handleLocalChange(goal._id, 'status', e.target.value)}
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 focus:bg-white cursor-pointer"
-                        >
-                          <option value="Not Started">Not Started</option>
-                          <option value="On Track">On Track</option>
-                          <option value="Completed">Completed</option>
-                        </select>
-                      </div>
-
-                      <button
-                        onClick={() => handleSaveAchievement(
-                          goal._id,
-                          localAchievements[`${goal._id}-${activeQuarter}`]?.actualAchievement ?? actual,
-                          localAchievements[`${goal._id}-${activeQuarter}`]?.status ?? status
-                        )}
-                        disabled={isSaving}
-                        className="w-full mt-2 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-                      >
-                        {isSaving ? 'Saving...' : 'Save Progress'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Live Tracker Metric */}
-                  <div className="mt-6 pt-4 border-t border-gray-100">
-                    <div className="flex justify-between items-center mb-1.5">
-                      <div>
-                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Progress Score</span>
-                        {/* UoM formula hint */}
-                        <span className="ml-2 text-[10px] text-gray-400 font-mono">
-                          ({goal.uomType === 'Numeric_Min' || goal.uomType === 'Percentage_Min' ? 'actual÷target' :
-                            goal.uomType === 'Numeric_Max' || goal.uomType === 'Percentage_Max' ? 'target÷actual' :
-                            goal.uomType === 'Zero-based' ? '0=100%' : 'date'})
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        {rawScore > 100 && (
-                          <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-green-100 text-green-700 border border-green-200">
-                            ★ Overachieved
-                          </span>
-                        )}
-                        <span className={`text-lg font-black ${
-                          rawScore >= 100 ? 'text-green-500' : rawScore > 0 ? 'text-indigo-600' : 'text-gray-400'
-                        }`}>
-                          {rawScore}%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden shadow-inner">
-                      <div
-                        className={`h-2.5 rounded-full transition-all duration-500 ease-out ${
-                          progressScore === 100
-                            ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]'
-                            : progressScore > 0 ? 'bg-indigo-500' : 'bg-gray-300'
-                        }`}
-                        style={{ width: `${progressScore}%` }}
-                      />
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {sheet.goals.map((goal, index) => (
+          <TrackingInputCard
+            key={goal._id}
+            goal={goal}
+            index={index}
+            activeQuarter={activeQuarter}
+            localAchievement={localAchievements[`${goal._id}-${activeQuarter}`]}
+            onLocalChange={handleLocalChange}
+            onSave={handleSaveAchievement}
+            isSaving={isSaving}
+          />
+        ))}
       </div>
     </div>
   );

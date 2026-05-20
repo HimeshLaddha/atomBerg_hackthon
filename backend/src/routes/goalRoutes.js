@@ -46,10 +46,10 @@ router.get('/', async (req, res) => {
   if (!userId) return res.status(400).json({ message: 'userId query parameter is required' });
 
   try {
-    const user = await User.findOne({ userId });
+    const user = await User.findOne({ userId }).select('_id').lean();
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const sheet = await GoalSheet.findOne({ employeeId: user._id, cycle: ACTIVE_CYCLE });
+    const sheet = await GoalSheet.findOne({ employeeId: user._id, cycle: ACTIVE_CYCLE }).select('-__v').lean();
     if (sheet) {
       return res.status(200).json(sheet);
     }
@@ -70,13 +70,13 @@ router.get('/team/subordinates', async (req, res) => {
   if (!managerId) return res.status(400).json({ message: 'managerId query parameter is required' });
 
   try {
-    const manager = await User.findOne({ userId: managerId });
+    const manager = await User.findOne({ userId: managerId }).select('_id').lean();
     if (!manager) return res.status(404).json({ message: 'Manager not found' });
 
-    const subordinates = await User.find({ managerId: manager._id });
+    const subordinates = await User.find({ managerId: manager._id }).select('_id userId name email department').lean();
 
     const teamData = await Promise.all(subordinates.map(async (sub) => {
-      const sheet = await GoalSheet.findOne({ employeeId: sub._id, cycle: ACTIVE_CYCLE });
+      const sheet = await GoalSheet.findOne({ employeeId: sub._id, cycle: ACTIVE_CYCLE }).select('status _id').lean();
       return {
         _id: sub._id,
         userId: sub.userId,
@@ -101,11 +101,13 @@ router.get('/team/subordinates', async (req, res) => {
 router.get('/pending', async (req, res) => {
   const { managerId } = req.query;
   try {
-    const manager = await User.findOne({ userId: managerId });
+    const manager = await User.findOne({ userId: managerId }).select('_id').lean();
     if (!manager) return res.status(404).json({ message: 'Manager not found' });
 
     const pendingSheets = await GoalSheet.find({ status: 'Pending_Approval' })
-      .populate({ path: 'employeeId', match: { managerId: manager._id }, select: 'name email department' });
+      .select('-__v')
+      .populate({ path: 'employeeId', match: { managerId: manager._id }, select: 'name email department' })
+      .lean();
 
     res.status(200).json(pendingSheets.filter(s => s.employeeId != null));
   } catch (error) {
@@ -120,11 +122,13 @@ router.get('/pending', async (req, res) => {
 router.get('/team-approved', async (req, res) => {
   const { managerId } = req.query;
   try {
-    const manager = await User.findOne({ userId: managerId });
+    const manager = await User.findOne({ userId: managerId }).select('_id').lean();
     if (!manager) return res.status(404).json({ message: 'Manager not found' });
 
     const approvedSheets = await GoalSheet.find({ status: 'Approved' })
-      .populate({ path: 'employeeId', match: { managerId: manager._id }, select: 'name email department userId' });
+      .select('-__v')
+      .populate({ path: 'employeeId', match: { managerId: manager._id }, select: 'name email department userId' })
+      .lean();
 
     res.status(200).json(approvedSheets.filter(s => s.employeeId != null));
   } catch (error) {
@@ -139,6 +143,7 @@ router.get('/team-approved', async (req, res) => {
 router.get('/approved', async (req, res) => {
   try {
     const sheets = await GoalSheet.find({ status: 'Approved' })
+      .select('-__v')
       .populate({
         path: 'employeeId',
         select: 'name email department userId managerId',
@@ -146,7 +151,8 @@ router.get('/approved', async (req, res) => {
           path: 'managerId',
           select: 'name email userId'
         }
-      });
+      })
+      .lean();
     res.status(200).json(sheets.filter(s => s.employeeId != null));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -160,9 +166,11 @@ router.get('/approved', async (req, res) => {
 router.get('/audit', async (req, res) => {
   try {
     const logs = await AuditLog.find()
+      .select('-__v')
       .populate('changedBy', 'name role')
       .populate('goalSheetId', 'cycle employeeId')
-      .sort({ timestamp: -1 });
+      .sort({ timestamp: -1 })
+      .lean();
     res.status(200).json(logs);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -175,10 +183,10 @@ router.get('/audit', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/:employeeId/:cycle', async (req, res) => {
   try {
-    const user = await User.findOne({ userId: req.params.employeeId });
+    const user = await User.findOne({ userId: req.params.employeeId }).select('_id').lean();
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const sheet = await GoalSheet.findOne({ employeeId: user._id, cycle: req.params.cycle });
+    const sheet = await GoalSheet.findOne({ employeeId: user._id, cycle: req.params.cycle }).select('-__v').lean();
     res.status(200).json(sheet);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -477,7 +485,7 @@ router.post('/shared-kpi', async (req, res) => {
   const { title, thrustArea, uomType, target, department } = req.body;
 
   try {
-    const users = await User.find({ department, role: { $ne: 'Admin' } });
+    const users = await User.find({ department, role: { $ne: 'Admin' } }).select('_id').lean();
 
     const sharedGoal = {
       goalId: `KPI-${Date.now()}`,
