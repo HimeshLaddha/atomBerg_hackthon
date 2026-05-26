@@ -67,7 +67,7 @@ The portal features a professional **split-panel login gateway** with session pe
 
 ## 🔐 Login & Authentication
 
-The portal uses a **client-side session simulation** — no real authentication server is required. The login system is fully self-contained within the React frontend.
+The portal utilizes a **secure backend database-backed authentication system** featuring **hashed passwords** (stored using `bcryptjs` on the server) and **JSON Web Tokens (JWT)** for route protection and state verification. 
 
 ### Login Page Layout
 
@@ -324,6 +324,8 @@ atomBerg_hackthon/
 ```js
 {
   userId:     String,   // e.g. "EMP-001" (human-readable ID)
+  username:   String,   // e.g. "alex.rivera" (unique login handle)
+  password:   String,   // Hashed password string (bcryptjs)
   name:       String,
   email:      String,
   role:       String,   // "Employee" | "Manager" | "Admin"
@@ -396,6 +398,22 @@ atomBerg_hackthon/
 | `PUT` | `/api/goals/manager-checkin/:sheetId` | Manager | Add quarterly comment on employee's goal |
 | `POST` | `/api/goals/shared-kpi` | Admin | Push shared KPI to all employees in a department |
 
+### Users & Authentication
+
+| Method | Endpoint | Auth Role | Description |
+|---|---|---|---|
+| `POST` | `/api/users/login` | Public | Authenticates username & password, returning JWT and user details |
+| `GET` | `/api/users` | Public/Manager | Retrieves all users, supporting `?role=Manager` filter for dropdown seeding |
+
+### Admin Governance
+
+| Method | Endpoint | Auth Role | Description |
+|---|---|---|---|
+| `POST` | `/api/admin/provision-user` | Admin | Creates a new employee record and initializes their blank H1 cycle GoalSheet |
+| `POST` | `/api/admin/broadcast-kpi` | Admin | Injects a shared KPI to targeted employee IDs |
+| `GET` | `/api/admin/audit-logs` | Admin | Retrieves post-lock changes logs for the Audit Trail tab |
+| `GET` | `/api/admin/completion-summary` | Admin | Retrieves org-wide employee progress stats |
+
 ### Submit Validation Rules (server-enforced)
 
 ```
@@ -446,10 +464,11 @@ atomBerg_hackthon/
 - **Return for Rework**: Resets status to `Draft` for employee revision
 - **Phase 2 Tab**: Lists all approved sheets. Side-by-side Target vs Actual grid with manager comment log per quarter
 
-### Admin Governance Panel (5 tabs)
+### Admin Governance Panel (6 tabs)
 
 | Tab | Functionality |
 |---|---|
+| 👤 User Provisioning | Form to dynamically provision new employees, generate credentials, and assign L1 Manager supervisor |
 | 📡 Shared KPI | Form to broadcast a KPI to all employees in a department |
 | 📊 Execution Matrix | Organization-wide approval status table + **Export Achievement Report** button |
 | ⚠ Escalation Tracker | Interactive **Time-Travel Slider (0-15 days)** rendering dynamic red/amber/yellow alerts |
@@ -612,8 +631,9 @@ Also pre-populates:
 |---|---|---|
 | `MONGODB_URI` | `mongodb://localhost:27017/goal-tracking-portal` | MongoDB connection string |
 | `PORT` | `5000` | Express server port |
+| `JWT_SECRET` | `goalsync_secret` | Secret key used to sign and verify JSON Web Tokens (JWT) |
 
-> **Note:** For production, replace with a MongoDB Atlas URI and set appropriate CORS origins.
+> **Note:** For production, replace with a MongoDB Atlas URI and set appropriate CORS origins and secure JWT secrets.
 
 ---
 
@@ -621,7 +641,6 @@ Also pre-populates:
 
 | Constraint | Reason |
 |---|---|
-| Client-side session only | No JWT/OAuth server — sessions live in `localStorage` |
 | Single active cycle (`2026-H1`) | Multi-cycle support would require a Cycle Manager service |
 | Escalation engine uses mock data | Real-time data would require WebSocket or polling |
 | Single manager per employee | Hierarchy supports one `managerId` reference |
