@@ -2,6 +2,7 @@ import express from 'express';
 import GoalSheet from '../models/GoalSheet.js';
 import AuditLog from '../models/AuditLog.js';
 import User from '../models/User.js';
+import { protect, admin } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 const ACTIVE_CYCLE = '2026-H1';
@@ -22,7 +23,7 @@ const ACTIVE_CYCLE = '2026-H1';
 // is unlocked and reverted to Draft so the employee can re-submit with the
 // new goal appended.
 // ─────────────────────────────────────────────────────────────────────────────
-router.post('/broadcast-kpi', async (req, res) => {
+router.post('/broadcast-kpi', protect, admin, async (req, res) => {
   const { title, thrustArea, uomType, target, employeeIds, department } = req.body;
 
   // ── Validate required KPI fields ──────────────────────────────────────────
@@ -148,7 +149,7 @@ router.post('/broadcast-kpi', async (req, res) => {
 // Alias for /api/goals/audit — provided here so the AdminDashboard can
 // use a semantically clear admin-namespace endpoint.
 // ─────────────────────────────────────────────────────────────────────────────
-router.get('/audit-logs', async (req, res) => {
+router.get('/audit-logs', protect, admin, async (req, res) => {
   try {
     const logs = await AuditLog.find()
       .select('-__v')
@@ -173,7 +174,7 @@ router.get('/audit-logs', async (req, res) => {
 //   - quarterlyComplete:  all Q1-Q4 goals have status 'Completed'
 //   - managerCheckinDone: all goals have a non-empty managerComment for every Q
 // ─────────────────────────────────────────────────────────────────────────────
-router.get('/completion-summary', async (req, res) => {
+router.get('/completion-summary', protect, admin, async (req, res) => {
   try {
     const sheets = await GoalSheet.find({ cycle: ACTIVE_CYCLE })
       .select('employeeId status isLocked goals')
@@ -226,6 +227,88 @@ router.get('/completion-summary', async (req, res) => {
     res.status(200).json(summary);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/admin/provision-user
+//
+// Dynamically creates a new employee record and initializes a fresh, empty
+// GoalSheet document for the current cycle ('2026-H1').
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/provision-user', protect, admin, async (req, res) => {
+  try {
+    const { name, email, userId, username, password, department, managerId } = req.body;
+
+    // Validate payload fields
+    if (!name?.trim())       return res.status(400).json({ message: 'Full Name is required.' });
+    if (!email?.trim())      return res.status(400).json({ message: 'Corporate Email is required.' });
+    if (!userId?.trim())     return res.status(400).json({ message: 'User ID is required.' });
+    if (!username?.trim())   return res.status(400).json({ message: 'Username is required.' });
+    if (!password)           return res.status(400).json({ message: 'Password is required.' });
+    if (!department?.trim()) return res.status(400).json({ message: 'Department is required.' });
+
+    // Check duplicate conflicts
+    const duplicateEmail = await User.findOne({ email: email.trim().toLowerCase() });
+    if (duplicateEmail) {
+      return res.status(400).json({ message: `Conflict: Email '${email}' is already in use.` });
+    }
+
+    const duplicateUserId = await User.findOne({ userId: userId.trim().toUpperCase() });
+    if (duplicateUserId) {
+      return res.status(400).json({ message: `Conflict: User ID '${userId}' is already in use.` });
+    }
+
+    const duplicateUsername = await User.findOne({ username: username.trim().toLowerCase() });
+    if (duplicateUsername) {
+      return res.status(400).json({ message: `Conflict: Username '${username}' is already in use.` });
+    }
+
+    const role = 'Employee'; // Default hardcoded to 'Employee'
+
+    // Create and save new user record
+    const newUser = new User({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      userId: userId.trim().toUpperCase(),
+      username: username.trim().toLowerCase(),
+      password, // hashed automatically by User model pre-save hook
+      role,
+      department: department.trim(),
+      managerId: managerId || null,
+    });
+
+    await newUser.save();
+
+    // Automatically initialize a clean, empty GoalSheet document for the new user
+    const newGoalSheet = new GoalSheet({
+      employeeId: newUser._id,
+      cycle: ACTIVE_CYCLE,
+      status: 'Draft',
+      isLocked: false,
+      goals: [],
+    });
+
+    await newGoalSheet.save();
+
+    res.status(201).json({
+      message: 'User provisioned successfully and H1 cycle workspace authorized.',
+      user: {
+        _id: newUser._id,
+        userId: newUser.userId,
+        username: newUser.username,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        department: newUser.department,
+        managerId: newUser.managerId,
+      },
+      goalSheetId: newGoalSheet._id,
+    });
+  } catch (error) {
+    console.error('Provisioning error:', error);
+    res.status(500).json({ message: error.message || 'Internal Server Error' });
   }
 });
 

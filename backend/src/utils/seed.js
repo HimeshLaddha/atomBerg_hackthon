@@ -24,27 +24,27 @@ const seedData = async () => {
     console.log('🗑  Cleared collections');
 
     // ── ADMINS ────────────────────────────────────────────────────────────────
-    const alex = await User.create({ userId:'EMP-001', name:'Alex Rivera',  email:'alex@company.com',  role:'Admin', department:'Human Resources' });
-    const priya = await User.create({ userId:'EMP-011', name:'Priya Kapoor', email:'priya@company.com', role:'Admin', department:'Human Resources' });
-    const sam  = await User.create({ userId:'EMP-012', name:'Sam O\'Brien',  email:'sam@company.com',   role:'Admin', department:'Operations' });
+    const alex = await User.create({ userId:'EMP-001', username:'alex.rivera', password:'adm@2026', name:'Alex Rivera',  email:'alex@company.com',  role:'Admin', department:'Human Resources' });
+    const priya = await User.create({ userId:'EMP-011', username:'priya.kapoor', password:'adm@2026b', name:'Priya Kapoor', email:'priya@company.com', role:'Admin', department:'Human Resources' });
+    const sam  = await User.create({ userId:'EMP-012', username:'sam.obrien', password:'adm@2026c', name:'Sam O\'Brien',  email:'sam@company.com',   role:'Admin', department:'Operations' });
 
     // ── MANAGERS ──────────────────────────────────────────────────────────────
-    const jane  = await User.create({ userId:'EMP-002', name:'Jane Smith',    email:'jane@company.com',    role:'Manager', managerId: alex._id,  department:'Engineering' });
-    const bob   = await User.create({ userId:'EMP-005', name:'Bob Martinez',  email:'bob@company.com',     role:'Manager', managerId: alex._id,  department:'Sales' });
-    const nina  = await User.create({ userId:'EMP-006', name:'Nina Patel',    email:'nina@company.com',    role:'Manager', managerId: priya._id, department:'Marketing' });
-    const raj   = await User.create({ userId:'EMP-007', name:'Raj Mehta',     email:'raj@company.com',     role:'Manager', managerId: sam._id,   department:'Finance' });
+    const jane  = await User.create({ userId:'EMP-002', username:'jane.smith', password:'mgr@2026', name:'Jane Smith',    email:'jane@company.com',    role:'Manager', managerId: alex._id,  department:'Engineering' });
+    const bob   = await User.create({ userId:'EMP-005', username:'bob.martinez', password:'mgr@2026b', name:'Bob Martinez',  email:'bob@company.com',     role:'Manager', managerId: alex._id,  department:'Sales' });
+    const nina  = await User.create({ userId:'EMP-006', username:'nina.patel', password:'mgr@2026c', name:'Nina Patel',    email:'nina@company.com',    role:'Manager', managerId: priya._id, department:'Marketing' });
+    const raj   = await User.create({ userId:'EMP-007', username:'raj.mehta', password:'mgr@2026d', name:'Raj Mehta',     email:'raj@company.com',     role:'Manager', managerId: sam._id,   department:'Finance' });
 
     // ── EMPLOYEES ─────────────────────────────────────────────────────────────
-    const john   = await User.create({ userId:'EMP-003', name:'John Doe',       email:'john@company.com',    role:'Employee', managerId: jane._id, department:'Engineering' });
-    const diana  = await User.create({ userId:'EMP-004', name:'Diana Employee', email:'diana@company.com',   role:'Employee', managerId: jane._id, department:'Engineering' });
-    const chen   = await User.create({ userId:'EMP-008', name:'Alice Chen',     email:'alice@company.com',   role:'Employee', managerId: jane._id, department:'Engineering' });
-    const david  = await User.create({ userId:'EMP-009', name:'David Lee',      email:'david@company.com',   role:'Employee', managerId: bob._id,  department:'Sales' });
-    const sana   = await User.create({ userId:'EMP-010', name:'Sana Mirza',     email:'sana@company.com',    role:'Employee', managerId: bob._id,  department:'Sales' });
-    const leo    = await User.create({ userId:'EMP-013', name:'Leo Costa',      email:'leo@company.com',     role:'Employee', managerId: nina._id, department:'Marketing' });
-    const meera  = await User.create({ userId:'EMP-014', name:'Meera Joshi',    email:'meera@company.com',   role:'Employee', managerId: nina._id, department:'Marketing' });
-    const tom    = await User.create({ userId:'EMP-015', name:'Tom Nguyen',     email:'tom@company.com',     role:'Employee', managerId: raj._id,  department:'Finance' });
-    const fia    = await User.create({ userId:'EMP-016', name:'Fia Andersen',   email:'fia@company.com',     role:'Employee', managerId: raj._id,  department:'Finance' });
-    const rohan  = await User.create({ userId:'EMP-017', name:'Rohan Gupta',    email:'rohan@company.com',   role:'Employee', managerId: jane._id, department:'Engineering' });
+    const john   = await User.create({ userId:'EMP-003', username:'john.doe', password:'emp@2026', name:'John Doe',       email:'john@company.com',    role:'Employee', managerId: jane._id, department:'Engineering' });
+    const diana  = await User.create({ userId:'EMP-004', username:'diana.emp', password:'emp@2026b', name:'Diana Employee', email:'diana@company.com',   role:'Employee', managerId: jane._id, department:'Engineering' });
+    const chen   = await User.create({ userId:'EMP-008', username:'alice.chen', password:'emp@2026c', name:'Alice Chen',     email:'alice@company.com',   role:'Employee', managerId: jane._id, department:'Engineering' });
+    const david  = await User.create({ userId:'EMP-009', username:'david.lee', password:'emp@2026d', name:'David Lee',      email:'david@company.com',   role:'Employee', managerId: bob._id,  department:'Sales' });
+    const sana   = await User.create({ userId:'EMP-010', username:'sana.mirza', password:'emp@2026e', name:'Sana Mirza',     email:'sana@company.com',    role:'Employee', managerId: bob._id,  department:'Sales' });
+    const leo    = await User.create({ userId:'EMP-013', username:'leo.costa', password:'emp@2026f', name:'Leo Costa',      email:'leo@company.com',     role:'Employee', managerId: nina._id, department:'Marketing' });
+    const meera  = await User.create({ userId:'EMP-014', username:'meera.joshi', password:'emp@2026g', name:'Meera Joshi',    email:'meera@company.com',   role:'Employee', managerId: nina._id, department:'Marketing' });
+    const tom    = await User.create({ userId:'EMP-015', username:'tom.nguyen', password:'emp@2026h', name:'Tom Nguyen',     email:'tom@company.com',     role:'Employee', managerId: raj._id,  department:'Finance' });
+    const fia    = await User.create({ userId:'EMP-016', username:'fia.andersen', password:'emp@2026i', name:'Fia Andersen',   email:'fia@company.com',     role:'Employee', managerId: raj._id,  department:'Finance' });
+    const rohan  = await User.create({ userId:'EMP-017', username:'rohan.gupta', password:'emp@2026j', name:'Rohan Gupta',    email:'rohan@company.com',   role:'Employee', managerId: jane._id, department:'Engineering' });
 
     console.log('👥 17 users created (3 Admin, 4 Manager, 10 Employee)');
 

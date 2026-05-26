@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
+import axios from 'axios';
 
 export const UserContext = createContext();
 
@@ -31,16 +32,28 @@ export const UserProvider = ({ children }) => {
   // components that read `activeUser` continue to work without changes.
   const activeUser = sessionUser;
 
+  // On mount, restore Axios authorization header if token exists in session
+  useEffect(() => {
+    const user = loadSession();
+    if (user?.token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
+    }
+  }, []);
+
   // ── login: called from Login.jsx after credential check ───────────────────
   const login = useCallback((userObject) => {
     saveSession(userObject);
     setSessionUser(userObject);
+    if (userObject?.token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${userObject.token}`;
+    }
   }, []);
 
   // ── logout: purges session completely ─────────────────────────────────────
   const logout = useCallback(() => {
     saveSession(null);
     setSessionUser(null);
+    delete axios.defaults.headers.common['Authorization'];
     localStorage.removeItem('activeRoleName'); // clean up legacy key if present
   }, []);
 

@@ -1,6 +1,8 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
+import API from '../config/api';
 
 // ── Dummy credentials map ─────────────────────────────────────────────────────
 // userIds MUST match backend/src/utils/seed.js exactly.
@@ -121,29 +123,41 @@ const Login = () => {
   }, [isAuthenticated, navigate]);
 
   // Direct card login
-  const handleCardLogin = (persona) => {
+  const handleCardLogin = async (persona) => {
     setActiveCard(persona.username);
     const cred = CREDENTIALS[persona.username];
-    setTimeout(() => {
-      login({ userId: cred.userId, name: cred.name, role: cred.role, department: cred.department });
+    try {
+      const res = await axios.post(`${API}/api/users/login`, {
+        username: persona.username,
+        password: cred.password
+      });
+      login(res.data);
       navigate('/dashboard', { replace: true });
-    }, 320);
+    } catch (err) {
+      console.error('Quick login error:', err);
+      setError(err.response?.data?.message || 'Quick login failed.');
+      setActiveCard(null);
+    }
   };
 
   // Form login
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    const cred = CREDENTIALS[username.trim().toLowerCase()];
-    if (!cred || cred.password !== password) {
-      setError('Invalid username or password. Check the hint below each card.');
-      return;
-    }
     setLoading(true);
-    setTimeout(() => {
-      login({ userId: cred.userId, name: cred.name, role: cred.role, department: cred.department });
+    try {
+      const res = await axios.post(`${API}/api/users/login`, {
+        username: username.trim().toLowerCase(),
+        password
+      });
+      login(res.data);
       navigate('/dashboard', { replace: true });
-    }, 500);
+    } catch (err) {
+      console.error('Form login error:', err);
+      setError(err.response?.data?.message || 'Invalid username or password.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Auto-fill form from card hint click

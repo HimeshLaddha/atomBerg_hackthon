@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import SharedKpiForm from '../components/admin/SharedKpiForm';
+import UserProvisioningForm from '../components/admin/UserProvisioningForm';
 import { exportMasterReport } from '../utils/csvExporter';
 import API from '../config/api';
 
@@ -435,6 +436,7 @@ const TABS = [
   { id: 'audit',   label: '🔍 Audit Trail'        },
   { id: 'report',  label: '📥 CSV Export'          },
   { id: 'kpi',     label: '📡 Inject Shared KPI'   },
+  { id: 'provisioning', label: '👤 User Provisioning' },
 ];
 
 const AdminDashboard = () => {
@@ -474,6 +476,7 @@ const AdminDashboard = () => {
       {activeTab === 'audit'   && <AuditTrailTab />}
       {activeTab === 'report'  && <ReportExporterTab />}
       {activeTab === 'kpi'     && <SharedKpiForm />}
+      {activeTab === 'provisioning' && <UserProvisioningForm />}
     </div>
   );
 };
